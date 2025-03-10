@@ -1,0 +1,10 @@
+services:
+  mysql:
+    image: 'mysql:latest'
+    environment:
+      - 'MYSQL_DATABASE=${SPANNER_DB_NAME}'
+      - 'MYSQL_PASSWORD=${SPANNER_DB_PASSWORD}'
+      - 'MYSQL_ROOT_PASSWORD=${SPANNER_DB_ROOT_PASSWORD}'
+      - 'MYSQL_USER=${SPANNER_DB_USERNAME}'
+    ports:
+      - '3306'
