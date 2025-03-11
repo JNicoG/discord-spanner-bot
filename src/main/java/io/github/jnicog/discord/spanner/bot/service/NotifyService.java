@@ -4,15 +4,15 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
-import java.util.List;
+import java.util.Set;
 
 public interface NotifyService {
 
-    void notifyPlayerQueuePopped(List<User> queue, MessageChannel channel);
+    void notifyPlayerQueuePopped(Set<User> queue, MessageChannel channel);
 
-    void notifyPoppedQueueAccepted(List<User> queue, MessageChannel messageChannel);
+    void notifyPoppedQueueAccepted(Set<User> queue, MessageChannel messageChannel);
 
-    void notifyPoppedQueueTimeout(List<User> queue, MessageChannel messageChannel);
+    void notifyPoppedQueueTimeout(Set<User> queue, MessageChannel messageChannel);
 
     void sendReply(SlashCommandInteractionEvent slashCommandInteractionEvent, String message, boolean isEphemeral);
 

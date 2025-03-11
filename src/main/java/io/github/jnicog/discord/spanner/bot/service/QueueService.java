@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
 import java.util.List;
+import java.util.Set;
 
 /***
  * Service to manage or query the current state of the keener queue.
@@ -16,15 +17,17 @@ public interface QueueService {
 
     List<User> removeFromPlayerQueue(List<User> removeFromPlayerQueueList);
 
-    List<User> getPlayerQueue();
+    void silentRemoveFromPlayerQueue(User user);
 
-    boolean isPlayerQueueFull();
+    Set<User> getPlayerQueue();
+
+/*    boolean isPlayerQueueFull();
 
     boolean getQueuePoppedState();
 
     void setQueuePoppedState();
 
-    void unsetQueuePoppedState();
+    void unsetQueuePoppedState();*/
 
     void resetPlayerQueue();
 

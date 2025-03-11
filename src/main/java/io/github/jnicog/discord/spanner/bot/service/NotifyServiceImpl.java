@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class NotifyServiceImpl implements NotifyService {
@@ -16,17 +17,17 @@ public class NotifyServiceImpl implements NotifyService {
     }
 
     @Override
-    public void notifyPlayerQueuePopped(List<User> queue, MessageChannel channel) {
+    public void notifyPlayerQueuePopped(Set<User> queue, MessageChannel channel) {
 
     }
 
     @Override
-    public void notifyPoppedQueueAccepted(List<User> queue, MessageChannel messageChannel) {
+    public void notifyPoppedQueueAccepted(Set<User> queue, MessageChannel messageChannel) {
 
     }
 
     @Override
-    public void notifyPoppedQueueTimeout(List<User> queue, MessageChannel messageChannel) {
+    public void notifyPoppedQueueTimeout(Set<User> queue, MessageChannel messageChannel) {
 
     }
 

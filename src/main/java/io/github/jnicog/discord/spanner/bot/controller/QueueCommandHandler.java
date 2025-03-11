@@ -29,8 +29,7 @@ public class QueueCommandHandler extends ListenerAdapter {
 
     private void routeSlashCommand(SlashCommandInteractionEvent slashCommandInteractionEvent) {
         switch (slashCommandInteractionEvent.getName()) {
-            case "k":
-            case "keen":
+            case "k", "keen":
                 handleKeen(slashCommandInteractionEvent);
                 break;
             case "unkeen":
