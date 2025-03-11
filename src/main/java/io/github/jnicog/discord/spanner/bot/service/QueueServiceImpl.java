@@ -5,15 +5,21 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.ArrayList;
+import java.util.List;
+
+import static io.github.jnicog.discord.spanner.bot.service.QueueInteractionOutcome.ADDED_TO_QUEUE;
+import static io.github.jnicog.discord.spanner.bot.service.QueueInteractionOutcome.ALREADY_IN_QUEUE;
+import static io.github.jnicog.discord.spanner.bot.service.QueueInteractionOutcome.ALREADY_NOT_IN_QUEUE;
+import static io.github.jnicog.discord.spanner.bot.service.QueueInteractionOutcome.QUEUE_ALREADY_FULL;
+import static io.github.jnicog.discord.spanner.bot.service.QueueInteractionOutcome.REMOVED_FROM_QUEUE;
 
 @Service
 public class QueueServiceImpl implements QueueService {
 
     private static final int MAX_QUEUE_SIZE = 5;
-    private final Deque<User> queue = new ArrayDeque<>(MAX_QUEUE_SIZE);
-    private static boolean isQueueFull = false;
+    private final List<User> playerQueue = new ArrayList<>(MAX_QUEUE_SIZE);
+    private static boolean isQueuePoppedState = false;
 
     @Autowired
     private final NotifyService notifyService;
@@ -22,87 +28,99 @@ public class QueueServiceImpl implements QueueService {
         this.notifyService = notifyService;
     }
 
-    /***
-     * Slash commands occur asynchronously whereas the queue is shared
-     * among all threads. Need synchronized keyword to prevent race conditions
-     * where multiple threads manipulate the queue simultaneously.
-     */
     @Override
-    public synchronized void addToQueue(SlashCommandInteractionEvent slashCommandInteractionEvent) {
+    public void joinPlayerQueue(SlashCommandInteractionEvent slashCommandInteractionEvent) {
         User user = slashCommandInteractionEvent.getUser();
 
-        if (queue.contains(user)) {
-            slashCommandInteractionEvent.reply(QueueStatus.ALREADY_IN_QUEUE.description).setEphemeral(true).queue();
+        if (playerQueue.contains(user)) {
+            notifyService.sendReply(slashCommandInteractionEvent, ALREADY_IN_QUEUE.getDescription(), true);
             return;
         }
 
-        if (queue.size() >= MAX_QUEUE_SIZE) {
-            slashCommandInteractionEvent.reply(QueueStatus.QUEUE_FULL.description).setEphemeral(true).queue();
+        if (playerQueue.size() >= MAX_QUEUE_SIZE) {
+            notifyService.sendReply(slashCommandInteractionEvent, QUEUE_ALREADY_FULL.getDescription(), true);
             return;
         }
 
-        queue.add(user);
-        slashCommandInteractionEvent.reply(
+        playerQueue.add(user);
+        notifyService.sendReply(slashCommandInteractionEvent,
+                String.format("%s%s [%d/5]", user.getAsMention(), ADDED_TO_QUEUE.getDescription(), playerQueue.size()),
+                false);
+
+        if (isPlayerQueueFull() && !getQueuePoppedState()) {
+            setQueuePoppedState();
+            notifyService.notifyPlayerQueuePopped(playerQueue, slashCommandInteractionEvent.getMessageChannel());
+        }
+    }
+
+    @Override
+    public void leavePlayerQueue(SlashCommandInteractionEvent slashCommandInteractionEvent) {
+        User user = slashCommandInteractionEvent.getUser();
+
+        if (!playerQueue.contains(user)) {
+            notifyService.sendReply(slashCommandInteractionEvent, ALREADY_NOT_IN_QUEUE.getDescription(), true);
+            return;
+        }
+
+        playerQueue.remove(slashCommandInteractionEvent.getUser());
+        notifyService.sendReply(slashCommandInteractionEvent,
                 String.format("%s%s [%d/5]",
                         user.getAsMention(),
-                        QueueStatus.ADDED_TO_QUEUE.description,
-                        queue.size()))
-                .queue();
+                        REMOVED_FROM_QUEUE.getDescription(),
+                        playerQueue.size()),
+                false);
 
-        if (queue.size() == MAX_QUEUE_SIZE && !isQueueFull) {
-            setQueueFull();
-            notifyService.notifyQueueReady(queue, slashCommandInteractionEvent.getChannel());
+        if (getQueuePoppedState()) {
+            unsetQueuePoppedState();
         }
-
     }
 
     @Override
-    public void removeFromQueue(SlashCommandInteractionEvent slashCommandInteractionEvent) {
-        User user = slashCommandInteractionEvent.getUser();
+    public List<User> removeFromPlayerQueue(List<User> removeFromPlayerQueueList) {
+        List<User> playersRemovedFromQueue = new ArrayList<>(5);
 
-        if (!queue.contains(user)) {
-            slashCommandInteractionEvent.reply(QueueStatus.NOT_IN_QUEUE.description).setEphemeral(true).queue();
+        for (User user : removeFromPlayerQueueList) {
+            if (!playerQueue.remove(user)) {
+                throw new IllegalArgumentException(
+                        String.format("Invalid user list provided. " +
+                                        "Failed to remove user %s from player queue " +
+                                        "(specified user is not in the player queue)",
+                                user.getIdLong()));
+            }
+            playersRemovedFromQueue.add(user);
         }
-
-        queue.remove(slashCommandInteractionEvent.getUser());
-        slashCommandInteractionEvent.reply(
-                String.format(
-                        "%s%s [%d/5]",
-                        user.getAsMention(),
-                        QueueStatus.REMOVED_FROM_QUEUE.description,
-                        queue.size()))
-                .queue();
+        return playersRemovedFromQueue;
     }
 
     @Override
-    public Deque<User> getQueue() {
-        return queue;
+    public List<User> getPlayerQueue() {
+        return playerQueue;
     }
 
     @Override
-    public int getQueueSize() {
-        return queue.size();
+    public boolean isPlayerQueueFull() {
+        return getPlayerQueue().size() == MAX_QUEUE_SIZE;
     }
 
     @Override
-    public boolean isQueueFull() {
-        return isQueueFull;
+    public boolean getQueuePoppedState() {
+        return isQueuePoppedState;
     }
 
     @Override
-    public void setQueueFull() {
-        isQueueFull = true;
+    public void setQueuePoppedState() {
+        isQueuePoppedState = true;
     }
 
     @Override
-    public void unsetQueueFull() {
-        isQueueFull = false;
+    public void unsetQueuePoppedState() {
+        isQueuePoppedState = false;
     }
 
     @Override
-    public void resetQueue() {
-        queue.clear();
-        unsetQueueFull();
+    public void resetPlayerQueue() {
+        playerQueue.clear();
+        unsetQueuePoppedState();
     }
 
 }

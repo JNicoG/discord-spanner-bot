@@ -27,10 +27,6 @@ public class QueueCommandHandler extends ListenerAdapter {
         }
     }
 
-    /***
-     * Takes a SlashCommandInteractionEvent as input and routes the command to a function
-     * based on the value of .getName()
-     */
     private void routeSlashCommand(SlashCommandInteractionEvent slashCommandInteractionEvent) {
         switch (slashCommandInteractionEvent.getName()) {
             case "k":
@@ -46,11 +42,11 @@ public class QueueCommandHandler extends ListenerAdapter {
     }
 
     private void handleKeen(SlashCommandInteractionEvent slashCommandInteractionEvent) {
-        queueService.addToQueue(slashCommandInteractionEvent);
+        queueService.joinPlayerQueue(slashCommandInteractionEvent);
     }
 
     private void handleUnkeen(SlashCommandInteractionEvent slashCommandInteractionEvent) {
-        queueService.removeFromQueue(slashCommandInteractionEvent);
+        queueService.leavePlayerQueue(slashCommandInteractionEvent);
     }
 
     private void handleInvalidCommand() {

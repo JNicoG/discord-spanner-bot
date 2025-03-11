@@ -3,27 +3,29 @@ package io.github.jnicog.discord.spanner.bot.service;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
-import java.util.Deque;
+import java.util.List;
 
 /***
  * Service to manage or query the current state of the keener queue.
  */
 public interface QueueService {
 
-    void addToQueue(SlashCommandInteractionEvent slashCommandInteractionEvent);
+    void joinPlayerQueue(SlashCommandInteractionEvent slashCommandInteractionEvent);
 
-    void removeFromQueue(SlashCommandInteractionEvent slashCommandInteractionEvent);
+    void leavePlayerQueue(SlashCommandInteractionEvent slashCommandInteractionEvent);
 
-    Deque<User> getQueue();
+    List<User> removeFromPlayerQueue(List<User> removeFromPlayerQueueList);
 
-    int getQueueSize();
+    List<User> getPlayerQueue();
 
-    boolean isQueueFull();
+    boolean isPlayerQueueFull();
 
-    void setQueueFull();
+    boolean getQueuePoppedState();
 
-    void unsetQueueFull();
+    void setQueuePoppedState();
 
-    void resetQueue();
+    void unsetQueuePoppedState();
+
+    void resetPlayerQueue();
 
 }
