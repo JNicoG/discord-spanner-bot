@@ -15,19 +15,11 @@ public interface QueueService {
 
     void leavePlayerQueue(SlashCommandInteractionEvent slashCommandInteractionEvent);
 
-    List<User> removeFromPlayerQueue(List<User> removeFromPlayerQueueList);
+    List<User> removeUserFromPlayerQueue(List<User> userList);
 
-    void silentRemoveFromPlayerQueue(User user);
+    void removeUserFromPlayerQueue(User user);
 
     Set<User> getPlayerQueue();
-
-/*    boolean isPlayerQueueFull();
-
-    boolean getQueuePoppedState();
-
-    void setQueuePoppedState();
-
-    void unsetQueuePoppedState();*/
 
     void resetPlayerQueue();
 

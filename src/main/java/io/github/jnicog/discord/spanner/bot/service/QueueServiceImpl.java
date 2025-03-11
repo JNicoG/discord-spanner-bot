@@ -30,7 +30,7 @@ public class QueueServiceImpl implements QueueService {
     private static final Logger LOGGER = LoggerFactory.getLogger(QueueServiceImpl.class);
 
     private final Map<User, Long> playerQueue = new LinkedHashMap<User, Long>(MAX_QUEUE_SIZE);
-    private static boolean isQueuePoppedState = false;
+    private boolean isQueuePoppedState = false;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final Map<User, ScheduledFuture<?>> timeoutTasks = new ConcurrentHashMap<>();
@@ -62,10 +62,7 @@ public class QueueServiceImpl implements QueueService {
             return;
         }
 
-        playerQueue.put(user, System.currentTimeMillis());
-        ScheduledFuture<?> timeoutKeen =
-                scheduler.schedule(() -> silentRemoveFromPlayerQueue(user), USER_TIMEOUT, TimeUnit.HOURS);
-        timeoutTasks.put(user, timeoutKeen);
+        addUserToPlayerQueue(user);
         notifyService.sendReply(slashCommandInteractionEvent,
                 String.format("%s%s [%d/5]", user.getAsMention(), ADDED_TO_QUEUE.getDescription(), playerQueue.size()),
                 false);
@@ -87,11 +84,7 @@ public class QueueServiceImpl implements QueueService {
             return;
         }
 
-        playerQueue.remove(slashCommandInteractionEvent.getUser());
-        ScheduledFuture<?> timeoutTask = timeoutTasks.remove(user);
-        if (timeoutTask != null) {
-            timeoutTask.cancel(false);
-        }
+        removeUserFromPlayerQueue(slashCommandInteractionEvent.getUser());
         notifyService.sendReply(slashCommandInteractionEvent,
                 String.format("%s%s [%d/5]",
                         user.getAsMention(),
@@ -104,26 +97,37 @@ public class QueueServiceImpl implements QueueService {
         }
     }
 
-    @Override
-    public synchronized List<User> removeFromPlayerQueue(List<User> removeFromPlayerQueueList) {
-        List<User> playersRemovedFromQueue = new ArrayList<>(5);
-
-        for (User user : removeFromPlayerQueueList) {
-            if (!playerQueue.containsKey(user)) {
-                throw new IllegalArgumentException(
-                        String.format("Invalid user list provided. " +
-                                        "Failed to remove user %s from player queue " +
-                                        "(specified user is not in the player queue)",
-                                user.getIdLong()));
-            }
-            playerQueue.remove(user);
-            playersRemovedFromQueue.add(user);
-        }
-        return playersRemovedFromQueue;
+    private synchronized void addUserToPlayerQueue(User user) {
+        playerQueue.put(user, System.currentTimeMillis());
+        ScheduledFuture<?> timeoutKeen =
+                scheduler.schedule(() -> removeKeenByTimeout(user), USER_TIMEOUT, TimeUnit.HOURS);
+        timeoutTasks.put(user, timeoutKeen);
     }
 
     @Override
-    public synchronized void silentRemoveFromPlayerQueue(User user) {
+    public synchronized List<User> removeUserFromPlayerQueue(List<User> userList) {
+        List<User> playersRemovedFromQueue = new ArrayList<>(5);
+
+        for (User user : userList) {
+            removeUserFromPlayerQueue(user);
+            playersRemovedFromQueue.add(user);
+        }
+        LOGGER.info(String.format("Users %s have been removed from the queue.",
+                playersRemovedFromQueue.stream().map(User::getName).toList()));
+        return playersRemovedFromQueue;
+    }
+
+    private synchronized void removeKeenByTimeout(User user) {
+        LOGGER.info(String.format("User %s has reached the timeout limit due to inactivity.", user.getName()));
+        /**
+         * TODO:
+         * If queue popped, do not remove by timeout - delay ScheduledFuture by 5 minutes?
+         */
+        removeUserFromPlayerQueue(user);
+    }
+
+    @Override
+    public synchronized void removeUserFromPlayerQueue(User user) {
         if (!playerQueue.containsKey(user)) {
             throw new IllegalArgumentException(
                     String.format("Invalid user provided. " +
@@ -132,7 +136,11 @@ public class QueueServiceImpl implements QueueService {
                             user.getIdLong()));
         }
         playerQueue.remove(user);
-        LOGGER.info(String.format("User %s has been timed out from the queue.", user.getName()));
+        ScheduledFuture<?> timeoutTask = timeoutTasks.remove(user);
+        if (timeoutTask != null) {
+            timeoutTask.cancel(false);
+        }
+        LOGGER.info(String.format("User %s has been removed from the queue.", user.getName()));
     }
 
     @Override
@@ -141,7 +149,7 @@ public class QueueServiceImpl implements QueueService {
     }
 
     public boolean isPlayerQueueFull() {
-        return getPlayerQueue().size() == MAX_QUEUE_SIZE;
+        return getPlayerQueue().size() >= MAX_QUEUE_SIZE;
     }
 
     public boolean getQueuePoppedState() {
@@ -150,6 +158,10 @@ public class QueueServiceImpl implements QueueService {
 
     public void setQueuePoppedState() {
         isQueuePoppedState = true;
+        /**
+         * TODO:
+         * Add timeout tasks for each user to react / "accept" queue within POPPED_QUEUE_TIMEOUT
+         */
     }
 
     public void unsetQueuePoppedState() {
@@ -158,6 +170,9 @@ public class QueueServiceImpl implements QueueService {
 
     @Override
     public synchronized void resetPlayerQueue() {
+        /**
+         * Handle scheduled timeout tasks
+         */
         playerQueue.clear();
         unsetQueuePoppedState();
     }
