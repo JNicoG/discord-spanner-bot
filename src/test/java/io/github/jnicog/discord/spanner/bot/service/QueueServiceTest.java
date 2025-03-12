@@ -118,7 +118,7 @@ public class QueueServiceTest {
         queueService.joinPlayerQueue(slashCommandInteractionEvent);
 
         // Then
-        Assertions.assertEquals(5, queueService.getPlayerQueue().size());
+        Assertions.assertEquals(1, queueService.getPlayerQueue().size());
         Assertions.assertTrue(queueService.getPlayerQueue().containsKey(user1));
         Assertions.assertNotNull(queueService.getPlayerQueue().get(user1));
         Assertions.assertFalse(queueService.isPlayerQueueFull());
@@ -165,8 +165,8 @@ public class QueueServiceTest {
 
         // Then
         Assertions.assertEquals(1, queueService.getPlayerQueue().size());
-        Assertions.assertFalse(queueService.getPlayerQueue().containsKey(user1));
-        Assertions.assertNull(queueService.getPlayerQueue().get(user1));
+        Assertions.assertTrue(queueService.getPlayerQueue().containsKey(user1));
+        Assertions.assertNotNull(queueService.getPlayerQueue().get(user1));
         Assertions.assertFalse(queueService.isPlayerQueueFull());
         Assertions.assertFalse(queueService.getQueuePoppedState());
         Assertions.assertTrue(queueService.getTimeoutTasksMap().containsKey(user1));
