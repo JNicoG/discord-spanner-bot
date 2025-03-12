@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -27,19 +28,30 @@ public class NotifyServiceImpl implements NotifyService {
     }
 
     @Override
+    public void notifyPoppedQueueDeclined(MessageChannel messageChannel, String message) {
+        messageChannel.sendMessage(message)
+                .setAllowedMentions(Collections.emptyList())
+                .queue();
+    }
+
+    @Override
     public void notifyPoppedQueueTimeout(Set<User> queue, MessageChannel messageChannel) {
 
     }
 
     @Override
-    public void sendReply(SlashCommandInteractionEvent slashCommandInteractionEvent,
-                          String message, boolean isEphemeral) {
-        slashCommandInteractionEvent.reply(message).setEphemeral(isEphemeral).queue();
+    public void sendReply(SlashCommandInteractionEvent slashCommandInteractionEvent, String message, boolean isEphemeral) {
+        slashCommandInteractionEvent.reply(message)
+                .setEphemeral(isEphemeral)
+                .queue();
     }
 
     @Override
     public void sendSilentReply(SlashCommandInteractionEvent slashCommandInteractionEvent, String message) {
-        slashCommandInteractionEvent.reply(message).setEphemeral(false).setAllowedMentions(List.of()).queue();
+        slashCommandInteractionEvent.reply(message)
+                .setEphemeral(false)
+                .setAllowedMentions(Collections.emptyList())
+                .queue();
     }
 
 }

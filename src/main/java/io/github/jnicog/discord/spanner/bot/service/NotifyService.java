@@ -12,6 +12,8 @@ public interface NotifyService {
 
     void notifyPoppedQueueAccepted(Set<User> queue, MessageChannel messageChannel);
 
+    void notifyPoppedQueueDeclined(MessageChannel messageChannel, String message);
+
     void notifyPoppedQueueTimeout(Set<User> queue, MessageChannel messageChannel);
 
     void sendReply(SlashCommandInteractionEvent slashCommandInteractionEvent, String message, boolean isEphemeral);

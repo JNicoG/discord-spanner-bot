@@ -11,12 +11,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static io.github.jnicog.discord.spanner.bot.service.QueueInteractionOutcome.ADDED_TO_QUEUE;
 import static io.github.jnicog.discord.spanner.bot.service.QueueInteractionOutcome.ALREADY_IN_QUEUE;
@@ -35,7 +35,7 @@ public class QueueServiceImpl implements QueueService {
     private final ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(1);
     private final Map<User, ScheduledFuture<?>> TIMEOUT_TASKS_MAP = new ConcurrentHashMap<>();
 
-    private static final int MAX_QUEUE_SIZE = 5;
+    public static final int MAX_QUEUE_SIZE = 5;
 
     private static final int USER_TIMEOUT = 1;
 
@@ -49,57 +49,39 @@ public class QueueServiceImpl implements QueueService {
     }
 
     @Override
-    public synchronized void joinPlayerQueue(SlashCommandInteractionEvent slashCommandInteractionEvent) {
+    public synchronized QueueInteractionOutcome joinPlayerQueue(SlashCommandInteractionEvent slashCommandInteractionEvent) {
         User user = slashCommandInteractionEvent.getUser();
 
         if (getPlayerQueue().containsKey(user)) {
-            notifyService.sendReply(slashCommandInteractionEvent, ALREADY_IN_QUEUE.getDescription(), true);
-            return;
+            return ALREADY_IN_QUEUE;
         }
 
         if (getPlayerQueue().size() >= MAX_QUEUE_SIZE) {
-            notifyService.sendReply(slashCommandInteractionEvent, QUEUE_ALREADY_FULL.getDescription(), true);
-            return;
+            return QUEUE_ALREADY_FULL;
         }
 
         addUserToPlayerQueue(user);
-        notifyService.sendReply(slashCommandInteractionEvent,
-                String.format("%s%s [%d/%d]",
-                        user.getAsMention(),
-                        ADDED_TO_QUEUE.getDescription(),
-                        getPlayerQueue().size(),
-                        MAX_QUEUE_SIZE),
-                false);
 
         if (isPlayerQueueFull() && !getQueuePoppedState()) {
             setQueuePoppedState();
-            notifyService.notifyPlayerQueuePopped(
-                    getPlayerQueue().keySet(), slashCommandInteractionEvent.getMessageChannel());
         }
+        return ADDED_TO_QUEUE;
     }
 
     @Override
-    public synchronized void leavePlayerQueue(SlashCommandInteractionEvent slashCommandInteractionEvent) {
+    public synchronized QueueInteractionOutcome leavePlayerQueue(SlashCommandInteractionEvent slashCommandInteractionEvent) {
         User user = slashCommandInteractionEvent.getUser();
 
         if (!getPlayerQueue().containsKey(user)) {
-            notifyService.sendReply(
-                    slashCommandInteractionEvent, ALREADY_NOT_IN_QUEUE.getDescription(), true);
-            return;
+            return ALREADY_NOT_IN_QUEUE;
         }
 
         removeUserFromPlayerQueue(slashCommandInteractionEvent.getUser());
-        notifyService.sendReply(slashCommandInteractionEvent,
-                String.format("%s%s [%d/%d]",
-                        user.getAsMention(),
-                        REMOVED_FROM_QUEUE.getDescription(),
-                        getPlayerQueue().size(),
-                        MAX_QUEUE_SIZE),
-                false);
 
         if (getQueuePoppedState()) {
             unsetQueuePoppedState();
         }
+        return REMOVED_FROM_QUEUE;
     }
 
     private synchronized void addUserToPlayerQueue(User user) {
@@ -117,17 +99,16 @@ public class QueueServiceImpl implements QueueService {
             removeUserFromPlayerQueue(user);
             playersRemovedFromQueue.add(user);
         }
+
         LOGGER.info(String.format("Users %s have been removed from the queue.",
                 playersRemovedFromQueue.stream().map(User::getName).toList()));
+
         return playersRemovedFromQueue;
     }
 
     private synchronized void removeKeenByTimeout(User user) {
         LOGGER.info(String.format("User %s has reached the timeout limit due to inactivity.", user.getName()));
-        /**
-         * TODO:
-         * If queue popped, do not remove by timeout - delay ScheduledFuture by 5 minutes?
-         */
+        // TODO: If queue popped, do not remove by timeout - delay ScheduledFuture by 5 minutes?
         removeUserFromPlayerQueue(user);
     }
 
@@ -149,19 +130,11 @@ public class QueueServiceImpl implements QueueService {
     }
 
     @Override
-    public void showQueue(SlashCommandInteractionEvent slashCommandInteractionEvent) {
-        notifyService.sendSilentReply(slashCommandInteractionEvent,
-                String.format("[%d/%d] Current keeners: %s",
-                        getPlayerQueue().size(),
-                        MAX_QUEUE_SIZE,
-                        getPlayerQueue()
-                                .keySet()
-                                .stream()
-                                .map(User::getAsMention)
-                                .collect(Collectors.joining(", "))));
+    public Set<User> showQueue() {
+        return getPlayerQueue().keySet();
     }
 
-    public synchronized Map<User, Long> getPlayerQueue() {
+    protected synchronized Map<User, Long> getPlayerQueue() {
         return this.PLAYER_QUEUE;
     }
 
@@ -175,25 +148,20 @@ public class QueueServiceImpl implements QueueService {
 
     public void setQueuePoppedState() {
         this.isQueuePoppedState = true;
-        /**
-         * TODO:
-         * Add timeout tasks for each user to react / "accept" queue within POPPED_QUEUE_TIMEOUT
-         */
+        // TODO: Add timeout tasks for each user to react / "accept" queue within POPPED_QUEUE_TIMEOUT
     }
 
     public void unsetQueuePoppedState() {
         this.isQueuePoppedState = false;
     }
 
-    public Map<User, ScheduledFuture<?>> getTimeoutTasksMap() {
+    protected Map<User, ScheduledFuture<?>> getTimeoutTasksMap() {
         return this.TIMEOUT_TASKS_MAP;
     }
 
     @Override
     public synchronized void resetPlayerQueue() {
-        /**
-         * Handle scheduled timeout tasks
-         */
+        // TODO: Handle scheduled timeout tasks
         getPlayerQueue().clear();
         unsetQueuePoppedState();
     }
