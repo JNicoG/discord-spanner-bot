@@ -1,8 +1,5 @@
 package io.github.jnicog.discord.spanner.bot.service;
 
-import lombok.Getter;
-
-@Getter
 public enum QueueInteractionOutcome {
     QUEUE_ALREADY_FULL("Queue is already full!"),
     ALREADY_IN_QUEUE("You are already in the queue!"),
@@ -16,4 +13,7 @@ public enum QueueInteractionOutcome {
         this.description = description;
     }
 
+    public String getDescription() {
+        return this.description;
+    }
 }

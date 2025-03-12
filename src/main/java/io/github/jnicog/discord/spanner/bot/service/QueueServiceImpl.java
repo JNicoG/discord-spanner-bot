@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -30,11 +29,11 @@ public class QueueServiceImpl implements QueueService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(QueueServiceImpl.class);
 
-    private final Map<User, Long> playerQueue = new LinkedHashMap<User, Long>(MAX_QUEUE_SIZE);
+    private final Map<User, Long> PLAYER_QUEUE = new LinkedHashMap<>(MAX_QUEUE_SIZE);
     private boolean isQueuePoppedState = false;
 
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    private final Map<User, ScheduledFuture<?>> timeoutTasks = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(1);
+    private final Map<User, ScheduledFuture<?>> TIMEOUT_TASKS_MAP = new ConcurrentHashMap<>();
 
     private static final int MAX_QUEUE_SIZE = 5;
 
@@ -53,12 +52,12 @@ public class QueueServiceImpl implements QueueService {
     public synchronized void joinPlayerQueue(SlashCommandInteractionEvent slashCommandInteractionEvent) {
         User user = slashCommandInteractionEvent.getUser();
 
-        if (playerQueue.containsKey(user)) {
+        if (getPlayerQueue().containsKey(user)) {
             notifyService.sendReply(slashCommandInteractionEvent, ALREADY_IN_QUEUE.getDescription(), true);
             return;
         }
 
-        if (playerQueue.size() >= MAX_QUEUE_SIZE) {
+        if (getPlayerQueue().size() >= MAX_QUEUE_SIZE) {
             notifyService.sendReply(slashCommandInteractionEvent, QUEUE_ALREADY_FULL.getDescription(), true);
             return;
         }
@@ -75,7 +74,7 @@ public class QueueServiceImpl implements QueueService {
         if (isPlayerQueueFull() && !getQueuePoppedState()) {
             setQueuePoppedState();
             notifyService.notifyPlayerQueuePopped(
-                    playerQueue.keySet(), slashCommandInteractionEvent.getMessageChannel());
+                    getPlayerQueue().keySet(), slashCommandInteractionEvent.getMessageChannel());
         }
     }
 
@@ -83,7 +82,7 @@ public class QueueServiceImpl implements QueueService {
     public synchronized void leavePlayerQueue(SlashCommandInteractionEvent slashCommandInteractionEvent) {
         User user = slashCommandInteractionEvent.getUser();
 
-        if (!playerQueue.containsKey(user)) {
+        if (!getPlayerQueue().containsKey(user)) {
             notifyService.sendReply(
                     slashCommandInteractionEvent, ALREADY_NOT_IN_QUEUE.getDescription(), true);
             return;
@@ -104,10 +103,10 @@ public class QueueServiceImpl implements QueueService {
     }
 
     private synchronized void addUserToPlayerQueue(User user) {
-        playerQueue.put(user, System.currentTimeMillis());
+        getPlayerQueue().put(user, System.currentTimeMillis());
         ScheduledFuture<?> timeoutKeen =
-                scheduler.schedule(() -> removeKeenByTimeout(user), USER_TIMEOUT, TimeUnit.HOURS);
-        timeoutTasks.put(user, timeoutKeen);
+                SCHEDULER.schedule(() -> removeKeenByTimeout(user), USER_TIMEOUT, TimeUnit.HOURS);
+        TIMEOUT_TASKS_MAP.put(user, timeoutKeen);
     }
 
     @Override
@@ -134,15 +133,15 @@ public class QueueServiceImpl implements QueueService {
 
     @Override
     public synchronized void removeUserFromPlayerQueue(User user) {
-        if (!playerQueue.containsKey(user)) {
+        if (!getPlayerQueue().containsKey(user)) {
             throw new IllegalArgumentException(
                     String.format("Invalid user provided. " +
                                     "Failed to remove user %s from player queue " +
                                     "(specified user is not in the player queue)",
                             user.getIdLong()));
         }
-        playerQueue.remove(user);
-        ScheduledFuture<?> timeoutTask = timeoutTasks.remove(user);
+        getPlayerQueue().remove(user);
+        ScheduledFuture<?> timeoutTask = TIMEOUT_TASKS_MAP.remove(user);
         if (timeoutTask != null) {
             timeoutTask.cancel(false);
         }
@@ -155,13 +154,15 @@ public class QueueServiceImpl implements QueueService {
                 String.format("[%d/%d] Current keeners: %s",
                         getPlayerQueue().size(),
                         MAX_QUEUE_SIZE,
-                        getPlayerQueue().stream()
+                        getPlayerQueue()
+                                .keySet()
+                                .stream()
                                 .map(User::getAsMention)
                                 .collect(Collectors.joining(", "))));
     }
 
-    public synchronized Set<User> getPlayerQueue() {
-        return playerQueue.keySet();
+    public synchronized Map<User, Long> getPlayerQueue() {
+        return this.PLAYER_QUEUE;
     }
 
     public boolean isPlayerQueueFull() {
@@ -169,11 +170,11 @@ public class QueueServiceImpl implements QueueService {
     }
 
     public boolean getQueuePoppedState() {
-        return isQueuePoppedState;
+        return this.isQueuePoppedState;
     }
 
     public void setQueuePoppedState() {
-        isQueuePoppedState = true;
+        this.isQueuePoppedState = true;
         /**
          * TODO:
          * Add timeout tasks for each user to react / "accept" queue within POPPED_QUEUE_TIMEOUT
@@ -181,7 +182,11 @@ public class QueueServiceImpl implements QueueService {
     }
 
     public void unsetQueuePoppedState() {
-        isQueuePoppedState = false;
+        this.isQueuePoppedState = false;
+    }
+
+    public Map<User, ScheduledFuture<?>> getTimeoutTasksMap() {
+        return this.TIMEOUT_TASKS_MAP;
     }
 
     @Override
@@ -189,7 +194,7 @@ public class QueueServiceImpl implements QueueService {
         /**
          * Handle scheduled timeout tasks
          */
-        playerQueue.clear();
+        getPlayerQueue().clear();
         unsetQueuePoppedState();
     }
 
