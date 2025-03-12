@@ -41,11 +41,8 @@ public class QueueServiceImpl implements QueueService {
 
     private static final int POPPED_QUEUE_TIMEOUT = 180;
 
-    @Autowired
-    private final NotifyService notifyService;
-
-    public QueueServiceImpl(NotifyService notifyService) {
-        this.notifyService = notifyService;
+    public QueueServiceImpl() {
+        // Do not instantiate
     }
 
     @Override

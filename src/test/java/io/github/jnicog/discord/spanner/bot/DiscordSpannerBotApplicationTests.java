@@ -1,5 +1,6 @@
 package io.github.jnicog.discord.spanner.bot;
 
+import io.github.jnicog.discord.spanner.bot.repository.SpannerRepository;
 import io.github.jnicog.discord.spanner.bot.service.NotifyService;
 import io.github.jnicog.discord.spanner.bot.service.QueueService;
 import org.junit.jupiter.api.Test;
@@ -23,10 +24,14 @@ class DiscordSpannerBotApplicationTests {
 	@Autowired
 	private NotifyService notifyService;
 
+	@Autowired
+	private SpannerRepository spannerRepository;
+
 	@Test
 	void contextLoads() {
 		assertNotNull(queueService);
 		assertNotNull(notifyService);
+		assertNotNull(spannerRepository);
 	}
 
 }

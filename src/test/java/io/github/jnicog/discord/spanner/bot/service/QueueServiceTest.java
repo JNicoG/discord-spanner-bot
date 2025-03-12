@@ -16,12 +16,10 @@ import org.springframework.boot.test.context.TestComponent;
 @ExtendWith(MockitoExtension.class)
 public class QueueServiceTest {
 
-    private final NotifyService notifyService = Mockito.mock(NotifyServiceImpl.class);
-
     @Mock
     private SlashCommandInteractionEvent slashCommandInteractionEvent;
 
-    private final QueueServiceImpl queueService = new QueueServiceImpl(notifyService);
+    private final QueueServiceImpl queueService = new QueueServiceImpl();
 
     private static final int MAX_QUEUE_SIZE = 5;
 
@@ -32,13 +30,13 @@ public class QueueServiceTest {
 
     @BeforeAll()
     public static void setup() {
-
+        // Empty
     }
 
     @Test
     public void checkNotNull() {
         Assertions.assertNotNull(queueService);
-        Assertions.assertNotNull(notifyService);
+        Assertions.assertNotNull(slashCommandInteractionEvent);
     }
 
     @Test
