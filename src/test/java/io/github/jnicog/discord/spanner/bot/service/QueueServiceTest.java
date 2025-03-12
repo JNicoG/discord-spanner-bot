@@ -1,8 +1,5 @@
-package io.github.jnicog.discord.spanner.bot.Service;
+package io.github.jnicog.discord.spanner.bot.service;
 
-import io.github.jnicog.discord.spanner.bot.service.NotifyService;
-import io.github.jnicog.discord.spanner.bot.service.NotifyServiceImpl;
-import io.github.jnicog.discord.spanner.bot.service.QueueServiceImpl;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import org.junit.jupiter.api.Assertions;
