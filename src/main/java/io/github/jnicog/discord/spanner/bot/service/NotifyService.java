@@ -16,4 +16,6 @@ public interface NotifyService {
 
     void sendReply(SlashCommandInteractionEvent slashCommandInteractionEvent, String message, boolean isEphemeral);
 
+    void sendSilentReply(SlashCommandInteractionEvent slashCommandInteractionEvent, String message);
+
 }

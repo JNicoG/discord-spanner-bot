@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -32,9 +33,13 @@ public class NotifyServiceImpl implements NotifyService {
 
     @Override
     public void sendReply(SlashCommandInteractionEvent slashCommandInteractionEvent,
-                          String message,
-                          boolean isEphemeral) {
+                          String message, boolean isEphemeral) {
         slashCommandInteractionEvent.reply(message).setEphemeral(isEphemeral).queue();
+    }
+
+    @Override
+    public void sendSilentReply(SlashCommandInteractionEvent slashCommandInteractionEvent, String message) {
+        slashCommandInteractionEvent.reply(message).setEphemeral(false).setAllowedMentions(List.of()).queue();
     }
 
 }

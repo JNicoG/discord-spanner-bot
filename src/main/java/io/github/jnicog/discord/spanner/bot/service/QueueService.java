@@ -19,7 +19,7 @@ public interface QueueService {
 
     void removeUserFromPlayerQueue(User user);
 
-    Set<User> getPlayerQueue();
+    void showQueue(SlashCommandInteractionEvent slashCommandInteractionEvent);
 
     void resetPlayerQueue();
 

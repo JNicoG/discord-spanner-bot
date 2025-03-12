@@ -35,6 +35,9 @@ public class QueueCommandHandler extends ListenerAdapter {
             case "unkeen":
                 handleUnkeen(slashCommandInteractionEvent);
                 break;
+            case "keeners":
+                handleKeeners(slashCommandInteractionEvent);
+                break;
             default:
                 handleInvalidCommand();
         }
@@ -46,6 +49,10 @@ public class QueueCommandHandler extends ListenerAdapter {
 
     private void handleUnkeen(SlashCommandInteractionEvent slashCommandInteractionEvent) {
         queueService.leavePlayerQueue(slashCommandInteractionEvent);
+    }
+
+    private void handleKeeners(SlashCommandInteractionEvent slashCommandInteractionEvent) {
+        queueService.showQueue(slashCommandInteractionEvent);
     }
 
     private void handleInvalidCommand() {

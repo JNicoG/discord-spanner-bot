@@ -17,6 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static io.github.jnicog.discord.spanner.bot.service.QueueInteractionOutcome.ADDED_TO_QUEUE;
 import static io.github.jnicog.discord.spanner.bot.service.QueueInteractionOutcome.ALREADY_IN_QUEUE;
@@ -64,7 +65,11 @@ public class QueueServiceImpl implements QueueService {
 
         addUserToPlayerQueue(user);
         notifyService.sendReply(slashCommandInteractionEvent,
-                String.format("%s%s [%d/5]", user.getAsMention(), ADDED_TO_QUEUE.getDescription(), playerQueue.size()),
+                String.format("%s%s [%d/%d]",
+                        user.getAsMention(),
+                        ADDED_TO_QUEUE.getDescription(),
+                        getPlayerQueue().size(),
+                        MAX_QUEUE_SIZE),
                 false);
 
         if (isPlayerQueueFull() && !getQueuePoppedState()) {
@@ -86,10 +91,11 @@ public class QueueServiceImpl implements QueueService {
 
         removeUserFromPlayerQueue(slashCommandInteractionEvent.getUser());
         notifyService.sendReply(slashCommandInteractionEvent,
-                String.format("%s%s [%d/5]",
+                String.format("%s%s [%d/%d]",
                         user.getAsMention(),
                         REMOVED_FROM_QUEUE.getDescription(),
-                        playerQueue.size()),
+                        getPlayerQueue().size(),
+                        MAX_QUEUE_SIZE),
                 false);
 
         if (getQueuePoppedState()) {
@@ -144,6 +150,16 @@ public class QueueServiceImpl implements QueueService {
     }
 
     @Override
+    public void showQueue(SlashCommandInteractionEvent slashCommandInteractionEvent) {
+        notifyService.sendSilentReply(slashCommandInteractionEvent,
+                String.format("[%d/%d] Current keeners: %s",
+                        getPlayerQueue().size(),
+                        MAX_QUEUE_SIZE,
+                        getPlayerQueue().stream()
+                                .map(User::getAsMention)
+                                .collect(Collectors.joining(", "))));
+    }
+
     public synchronized Set<User> getPlayerQueue() {
         return playerQueue.keySet();
     }
