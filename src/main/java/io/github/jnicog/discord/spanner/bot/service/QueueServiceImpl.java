@@ -4,11 +4,9 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,12 +27,13 @@ public class QueueServiceImpl implements QueueService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(QueueServiceImpl.class);
 
-    private final Map<User, Long> PLAYER_QUEUE = new LinkedHashMap<>(MAX_QUEUE_SIZE);
+    private final Map<User, KeenMetadata> PLAYER_QUEUE = new ConcurrentHashMap<>(MAX_QUEUE_SIZE);
     private boolean isQueuePoppedState = false;
 
     private final ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(1);
     private final Map<User, ScheduledFuture<?>> TIMEOUT_TASKS_MAP = new ConcurrentHashMap<>();
 
+    // TODO: Move queue properties
     public static final int MAX_QUEUE_SIZE = 5;
 
     private static final int USER_TIMEOUT = 1;
@@ -46,10 +45,8 @@ public class QueueServiceImpl implements QueueService {
     }
 
     @Override
-    public synchronized QueueInteractionOutcome joinPlayerQueue(SlashCommandInteractionEvent slashCommandInteractionEvent) {
-        User user = slashCommandInteractionEvent.getUser();
-
-        if (getPlayerQueue().containsKey(user)) {
+    public QueueInteractionOutcome joinPlayerQueue(SlashCommandInteractionEvent slashCommandInteractionEvent) {
+        if (getPlayerQueue().containsKey(slashCommandInteractionEvent.getUser())) {
             return ALREADY_IN_QUEUE;
         }
 
@@ -57,16 +54,13 @@ public class QueueServiceImpl implements QueueService {
             return QUEUE_ALREADY_FULL;
         }
 
-        addUserToPlayerQueue(user);
+        addUserToPlayerQueue(slashCommandInteractionEvent);
 
-        if (isPlayerQueueFull() && !getQueuePoppedState()) {
-            setQueuePoppedState();
-        }
         return ADDED_TO_QUEUE;
     }
 
     @Override
-    public synchronized QueueInteractionOutcome leavePlayerQueue(SlashCommandInteractionEvent slashCommandInteractionEvent) {
+    public QueueInteractionOutcome leavePlayerQueue(SlashCommandInteractionEvent slashCommandInteractionEvent) {
         User user = slashCommandInteractionEvent.getUser();
 
         if (!getPlayerQueue().containsKey(user)) {
@@ -74,22 +68,26 @@ public class QueueServiceImpl implements QueueService {
         }
 
         removeUserFromPlayerQueue(slashCommandInteractionEvent.getUser());
-
-        if (getQueuePoppedState()) {
-            unsetQueuePoppedState();
-        }
         return REMOVED_FROM_QUEUE;
     }
 
-    private synchronized void addUserToPlayerQueue(User user) {
-        getPlayerQueue().put(user, System.currentTimeMillis());
+    private void addUserToPlayerQueue(SlashCommandInteractionEvent slashCommandInteractionEvent) {
+        User user = slashCommandInteractionEvent.getUser();
+
+        getPlayerQueue().put(user,
+                new KeenMetadata(System.currentTimeMillis(), slashCommandInteractionEvent));
+
         ScheduledFuture<?> timeoutKeen =
                 SCHEDULER.schedule(() -> removeKeenByTimeout(user), USER_TIMEOUT, TimeUnit.HOURS);
         TIMEOUT_TASKS_MAP.put(user, timeoutKeen);
+
+        if (isPlayerQueueFull() && !getQueuePoppedState()) {
+            setQueuePoppedState();
+        }
     }
 
     @Override
-    public synchronized List<User> removeUserFromPlayerQueue(List<User> userList) {
+    public List<User> removeUserFromPlayerQueue(List<User> userList) {
         List<User> playersRemovedFromQueue = new ArrayList<>(5);
 
         for (User user : userList) {
@@ -103,14 +101,14 @@ public class QueueServiceImpl implements QueueService {
         return playersRemovedFromQueue;
     }
 
-    private synchronized void removeKeenByTimeout(User user) {
+    private void removeKeenByTimeout(User user) {
         LOGGER.info(String.format("User %s has reached the timeout limit due to inactivity.", user.getName()));
         // TODO: If queue popped, do not remove by timeout - delay ScheduledFuture by 5 minutes?
         removeUserFromPlayerQueue(user);
     }
 
     @Override
-    public synchronized void removeUserFromPlayerQueue(User user) {
+    public void removeUserFromPlayerQueue(User user) {
         if (!getPlayerQueue().containsKey(user)) {
             throw new IllegalArgumentException(
                     String.format("Invalid user provided. " +
@@ -118,11 +116,18 @@ public class QueueServiceImpl implements QueueService {
                                     "(specified user is not in the player queue)",
                             user.getIdLong()));
         }
+
         getPlayerQueue().remove(user);
+
+        if (getQueuePoppedState()) {
+            unsetQueuePoppedState();
+        }
+
         ScheduledFuture<?> timeoutTask = TIMEOUT_TASKS_MAP.remove(user);
         if (timeoutTask != null) {
             timeoutTask.cancel(false);
         }
+
         LOGGER.info(String.format("User %s has been removed from the queue.", user.getName()));
     }
 
@@ -131,7 +136,7 @@ public class QueueServiceImpl implements QueueService {
         return getPlayerQueue().keySet();
     }
 
-    protected synchronized Map<User, Long> getPlayerQueue() {
+    public Map<User, KeenMetadata> getPlayerQueue() {
         return this.PLAYER_QUEUE;
     }
 
@@ -145,7 +150,6 @@ public class QueueServiceImpl implements QueueService {
 
     public void setQueuePoppedState() {
         this.isQueuePoppedState = true;
-        // TODO: Add timeout tasks for each user to react / "accept" queue within POPPED_QUEUE_TIMEOUT
     }
 
     public void unsetQueuePoppedState() {

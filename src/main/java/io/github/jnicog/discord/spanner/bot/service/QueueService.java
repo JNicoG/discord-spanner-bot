@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /***
@@ -20,6 +21,8 @@ public interface QueueService {
     void removeUserFromPlayerQueue(User user);
 
     Set<User> showQueue();
+
+    Map<User, KeenMetadata> getPlayerQueue();
 
     boolean getQueuePoppedState();
 

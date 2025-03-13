@@ -7,10 +7,12 @@ import io.github.jnicog.discord.spanner.bot.service.QueueInteractionOutcome;
 import io.github.jnicog.discord.spanner.bot.service.QueueService;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Nonnull;
 import java.util.stream.Collectors;
 
 import static io.github.jnicog.discord.spanner.bot.service.QueueInteractionOutcome.ADDED_TO_QUEUE;
@@ -28,14 +30,49 @@ public class QueueCommandHandler extends ListenerAdapter {
     private final SpannerRepository spannerRepository;
 
     @Autowired
-    public QueueCommandHandler(QueueService queueService, NotifyService notifyService, SpannerRepository spannerRepository) {
+    public QueueCommandHandler(QueueService queueService,
+                               NotifyService notifyService,
+                               SpannerRepository spannerRepository) {
         this.queueService = queueService;
         this.notifyService = notifyService;
         this.spannerRepository = spannerRepository;
     }
 
     @Override
-    public void onSlashCommandInteraction(SlashCommandInteractionEvent slashCommandInteractionEvent) {
+    public void onButtonInteraction(@Nonnull ButtonInteractionEvent buttonInteractionEvent) {
+        if (!Strings.isNullOrEmpty(buttonInteractionEvent.getComponentId())) {
+            routeButtonInteraction(buttonInteractionEvent);
+        } else {
+            throw new RuntimeException("Invalid button pressed. Button not recognised.");
+        }
+    }
+
+    private void routeButtonInteraction(ButtonInteractionEvent buttonInteractionEvent) {
+        switch (buttonInteractionEvent.getComponentId()) {
+            case "spannerButton" -> handleSpannerButton(buttonInteractionEvent);
+            case "acceptButton" -> handleAcceptButton(buttonInteractionEvent);
+            default -> handleInvalidButton();
+        }
+    }
+
+    private void handleAcceptButton(ButtonInteractionEvent buttonInteractionEvent) {
+        /*queueService.updateAcceptList(buttonInteractionEvent.getUser());*/
+    }
+
+    private void handleSpannerButton(ButtonInteractionEvent buttonInteractionEvent) {
+        queueService.removeUserFromPlayerQueue(buttonInteractionEvent.getUser());
+        spannerRepository.incrementSpannerCount(buttonInteractionEvent.getUser().getIdLong());
+        notifyService.notifyPoppedQueueDeclined(buttonInteractionEvent,
+                String.format("%s has spannered. The remaining keeners will be returned to the queue.",
+                buttonInteractionEvent.getUser().getAsMention()));
+    }
+
+    private void handleInvalidButton() {
+        throw new RuntimeException("Unknown button ID.");
+    }
+
+    @Override
+    public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent slashCommandInteractionEvent) {
         if (!Strings.isNullOrEmpty(slashCommandInteractionEvent.getName())) {
             routeSlashCommand(slashCommandInteractionEvent);
         } else {
@@ -72,7 +109,7 @@ public class QueueCommandHandler extends ListenerAdapter {
 
         if (queueInteractionOutcome.equals(ADDED_TO_QUEUE) && queueService.getQueuePoppedState()) {
             notifyService.notifyPlayerQueuePopped(
-                    queueService.showQueue(), slashCommandInteractionEvent.getMessageChannel());
+                    queueService.getPlayerQueue(), slashCommandInteractionEvent.getMessageChannel());
         }
     }
 
@@ -93,7 +130,7 @@ public class QueueCommandHandler extends ListenerAdapter {
 
         if (queueInteractionOutcome.equals(REMOVED_FROM_QUEUE) && activeQueuePop) {
             notifyService.notifyPoppedQueueDeclined(
-                    slashCommandInteractionEvent.getMessageChannel(),
+                    slashCommandInteractionEvent/*.getMessageChannel()*/,
                     String.format("%s declined and has received a spanner." +
                                     " The remaining players will be returned to the queue.",
                             slashCommandInteractionEvent.getUser().getAsMention()));
