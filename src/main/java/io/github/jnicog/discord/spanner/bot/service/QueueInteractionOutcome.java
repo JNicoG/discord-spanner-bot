@@ -16,4 +16,5 @@ public enum QueueInteractionOutcome {
     public String getDescription() {
         return this.description;
     }
+
 }

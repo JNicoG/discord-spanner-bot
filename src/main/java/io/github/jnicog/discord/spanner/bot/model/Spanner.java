@@ -21,7 +21,7 @@ public class Spanner {
 /*    public Spanner() {
     }*/
 
-    public Spanner(int userId) {
+    public Spanner(long userId) {
         this.userId = userId;
         this.spannerCount = 0;
     }

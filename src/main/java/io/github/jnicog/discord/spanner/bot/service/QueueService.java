@@ -22,11 +22,7 @@ public interface QueueService {
 
     Set<User> showQueue();
 
-    Map<User, KeenMetadata> getPlayerQueue();
-
-    boolean getQueuePoppedState();
-
-    void setQueuePoppedState();
+    Map<User, Long> getPlayerQueue();
 
     boolean isPlayerQueueFull();
 

@@ -9,4 +9,5 @@ public interface SpannerRepository /*extends JpaRepository<Spanner, Integer>*/ {
     int getSpannerCount(long userId);
 
     void incrementSpannerCount(long userId);
+
 }

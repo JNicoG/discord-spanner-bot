@@ -1,4 +1,3 @@
-/*
 package io.github.jnicog.discord.spanner.bot.service;
 
 import net.dv8tion.jda.api.entities.User;
@@ -54,7 +53,6 @@ public class QueueServiceTest {
         Assertions.assertTrue(queueService.getPlayerQueue().containsKey(user));
         Assertions.assertNotNull(queueService.getPlayerQueue().get(user));
         Assertions.assertFalse(queueService.isPlayerQueueFull());
-        Assertions.assertFalse(queueService.getQueuePoppedState());
     }
 
     @Test
@@ -76,7 +74,6 @@ public class QueueServiceTest {
         Assertions.assertTrue(queueService.getPlayerQueue().containsKey(user2));
         Assertions.assertNotNull(queueService.getPlayerQueue().get(user2));
         Assertions.assertFalse(queueService.isPlayerQueueFull());
-        Assertions.assertFalse(queueService.getQueuePoppedState());
     }
 
     @Test
@@ -98,11 +95,10 @@ public class QueueServiceTest {
         queueService.joinPlayerQueue(slashCommandInteractionEvent);
 
         // Then
-        Assertions.assertEquals(5, queueService.getPlayerQueue().size());
+        Assertions.assertEquals(MAX_QUEUE_SIZE, queueService.getPlayerQueue().size());
         Assertions.assertTrue(queueService.getPlayerQueue().containsKey(user5));
         Assertions.assertNotNull(queueService.getPlayerQueue().get(user5));
         Assertions.assertTrue(queueService.isPlayerQueueFull());
-        Assertions.assertTrue(queueService.getQueuePoppedState());
     }
 
     @Test
@@ -121,7 +117,6 @@ public class QueueServiceTest {
         Assertions.assertTrue(queueService.getPlayerQueue().containsKey(user1));
         Assertions.assertNotNull(queueService.getPlayerQueue().get(user1));
         Assertions.assertFalse(queueService.isPlayerQueueFull());
-        Assertions.assertFalse(queueService.getQueuePoppedState());
     }
 
     @Test
@@ -137,7 +132,6 @@ public class QueueServiceTest {
         queueService.getPlayerQueue().put(user3, System.currentTimeMillis());
         queueService.getPlayerQueue().put(user4, System.currentTimeMillis());
         queueService.getPlayerQueue().put(user5, System.currentTimeMillis());
-        queueService.setQueuePoppedState();
 
         User user6 = Mockito.mock(User.class);
         Mockito.when(slashCommandInteractionEvent.getUser()).thenReturn(user6);
@@ -146,11 +140,10 @@ public class QueueServiceTest {
         queueService.joinPlayerQueue(slashCommandInteractionEvent);
 
         // Then
-        Assertions.assertEquals(5, queueService.getPlayerQueue().size());
+        Assertions.assertEquals(MAX_QUEUE_SIZE, queueService.getPlayerQueue().size());
         Assertions.assertFalse(queueService.getPlayerQueue().containsKey(user6));
         Assertions.assertNull(queueService.getPlayerQueue().get(user6));
         Assertions.assertTrue(queueService.isPlayerQueueFull());
-        Assertions.assertTrue(queueService.getQueuePoppedState());
     }
 
     @Test
@@ -167,17 +160,8 @@ public class QueueServiceTest {
         Assertions.assertTrue(queueService.getPlayerQueue().containsKey(user1));
         Assertions.assertNotNull(queueService.getPlayerQueue().get(user1));
         Assertions.assertFalse(queueService.isPlayerQueueFull());
-        Assertions.assertFalse(queueService.getQueuePoppedState());
         Assertions.assertTrue(queueService.getTimeoutTasksMap().containsKey(user1));
         Assertions.assertNotNull(queueService.getTimeoutTasksMap().get(user1));
     }
 
-    */
-/**
-     * TODO:
-     * Test remaining methods
-     *//*
-
-
 }
-*/

@@ -27,18 +27,15 @@ public class QueueServiceImpl implements QueueService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(QueueServiceImpl.class);
 
-    private final Map<User, KeenMetadata> PLAYER_QUEUE = new ConcurrentHashMap<>(MAX_QUEUE_SIZE);
-    private boolean isQueuePoppedState = false;
+    private final Map<User, Long> PLAYER_QUEUE = new ConcurrentHashMap<>(MAX_QUEUE_SIZE);
 
     private final ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(1);
     private final Map<User, ScheduledFuture<?>> TIMEOUT_TASKS_MAP = new ConcurrentHashMap<>();
 
     // TODO: Move queue properties
-    public static final int MAX_QUEUE_SIZE = 1;
-
-    private static final int USER_TIMEOUT = 1;
-
-    private static final int POPPED_QUEUE_TIMEOUT = 180;
+    public static final int MAX_QUEUE_SIZE = 5;
+    private static final int USER_TIMEOUT_LENGTH = 1;
+    private static final TimeUnit USER_TIMEOUT_UNIT = TimeUnit.HOURS;
 
     public QueueServiceImpl() {
         // Do not instantiate
@@ -74,11 +71,10 @@ public class QueueServiceImpl implements QueueService {
     private void addUserToPlayerQueue(SlashCommandInteractionEvent slashCommandInteractionEvent) {
         User user = slashCommandInteractionEvent.getUser();
 
-        getPlayerQueue().put(user,
-                new KeenMetadata(System.currentTimeMillis(), slashCommandInteractionEvent));
+        getPlayerQueue().put(user, System.currentTimeMillis());
 
         ScheduledFuture<?> timeoutKeen =
-                SCHEDULER.schedule(() -> removeKeenByTimeout(user), USER_TIMEOUT, TimeUnit.HOURS);
+                SCHEDULER.schedule(() -> removeKeenByTimeout(user), USER_TIMEOUT_LENGTH, USER_TIMEOUT_UNIT);
         TIMEOUT_TASKS_MAP.put(user, timeoutKeen);
 
     }
@@ -116,10 +112,6 @@ public class QueueServiceImpl implements QueueService {
 
         getPlayerQueue().remove(user);
 
-        if (getQueuePoppedState()) {
-            unsetQueuePoppedState();
-        }
-
         ScheduledFuture<?> timeoutTask = TIMEOUT_TASKS_MAP.remove(user);
         if (timeoutTask != null) {
             timeoutTask.cancel(false);
@@ -133,24 +125,12 @@ public class QueueServiceImpl implements QueueService {
         return getPlayerQueue().keySet();
     }
 
-    public Map<User, KeenMetadata> getPlayerQueue() {
+    public Map<User, Long> getPlayerQueue() {
         return this.PLAYER_QUEUE;
     }
 
     public boolean isPlayerQueueFull() {
         return getPlayerQueue().size() >= MAX_QUEUE_SIZE;
-    }
-
-    public boolean getQueuePoppedState() {
-        return this.isQueuePoppedState;
-    }
-
-    public void setQueuePoppedState() {
-        this.isQueuePoppedState = true;
-    }
-
-    public void unsetQueuePoppedState() {
-        this.isQueuePoppedState = false;
     }
 
     protected Map<User, ScheduledFuture<?>> getTimeoutTasksMap() {
@@ -159,9 +139,9 @@ public class QueueServiceImpl implements QueueService {
 
     @Override
     public synchronized void resetPlayerQueue() {
-        // TODO: Handle scheduled timeout tasks
+        getTimeoutTasksMap().values().forEach(scheduledFuture -> scheduledFuture.cancel(false));
+        getTimeoutTasksMap().clear();
         getPlayerQueue().clear();
-        unsetQueuePoppedState();
     }
 
 }

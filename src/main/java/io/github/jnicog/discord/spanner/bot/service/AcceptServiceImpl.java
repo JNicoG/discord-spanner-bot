@@ -1,18 +1,14 @@
 package io.github.jnicog.discord.spanner.bot.service;
 
-import io.github.jnicog.discord.spanner.bot.model.Spanner;
 import io.github.jnicog.discord.spanner.bot.repository.SpannerRepository;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
-import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
-import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,6 +20,8 @@ import java.util.stream.Collectors;
 
 import static io.github.jnicog.discord.spanner.bot.service.AcceptState.ACCEPTED;
 import static io.github.jnicog.discord.spanner.bot.service.AcceptState.AWAITING;
+import static io.github.jnicog.discord.spanner.bot.service.Constants.awaitingButton;
+import static io.github.jnicog.discord.spanner.bot.service.Constants.checkMarkEmoji;
 
 @Service
 public class AcceptServiceImpl implements AcceptService {
@@ -34,11 +32,14 @@ public class AcceptServiceImpl implements AcceptService {
     private final QueueService queueService;
     private final SpannerRepository spannerRepository;
 
-    private long activeQueueMessageId = 0;
+    private long activeQueueMessageId = -1;
 
-    ConcurrentHashMap<User, AcceptState> userAcceptStateMap = new ConcurrentHashMap<>(5);
+    private final ConcurrentHashMap<User, AcceptState> userAcceptStateMap = new ConcurrentHashMap<>(5);
 
-    private static final int ACCEPT_TIMEOUT_MINUTES = 3;
+    // Consider moving to properties / config
+    public static final TimeUnit TIME_UNIT = TimeUnit.SECONDS;
+    public static final int ACCEPT_TIMEOUT_LENGTH = 5;
+
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private ScheduledFuture<?> timeoutTask;
 
@@ -52,7 +53,7 @@ public class AcceptServiceImpl implements AcceptService {
     }
 
     @Override
-    public void initialiseQueue(long queuePopMessageId) {
+    public void initialiseAcceptQueue(long queuePopMessageId, MessageChannel messageChannel) {
         userAcceptStateMap.clear();
 
         Set<User> activeQueue = queueService.showQueue();
@@ -65,7 +66,11 @@ public class AcceptServiceImpl implements AcceptService {
         LOGGER.info("Initialised accept state tracking with message ID {} for current queue: {}",
                 queuePopMessageId, activeQueue);
 
-        setupTimeoutTask(messageChannel);
+        if (messageChannel != null) {
+            setupTimeoutTask(messageChannel);
+        } else {
+            LOGGER.error("Failed to set up accept queue timeout task: Message channel is null");
+        }
     }
 
     @Override
@@ -82,75 +87,72 @@ public class AcceptServiceImpl implements AcceptService {
         userAcceptStateMap.put(buttonInteractionEvent.getUser(), ACCEPTED);
         LOGGER.info("User {} accepted the queue", user.getName());
 
-        String updatedMessage = formatQueueStatusMessage();
-
-        notifyService.notifyPoppedQueuePlayerAccept(buttonInteractionEvent, updatedMessage);
-
         checkAllAccepted(buttonInteractionEvent);
-    }
-
-    private String formatQueueStatusMessage() {
-        String userStatuses = userAcceptStateMap.entrySet().stream()
-                .map(entry -> {
-                    User user = entry.getKey();
-                    AcceptState acceptState = entry.getValue();
-                    return user.getAsMention()
-                            + (acceptState == AcceptState.ACCEPTED ?
-                            String.format(" %s", Emoji.fromUnicode("U+2705"))
-                            : String.format(" %s", Emoji.fromUnicode("U+1F527")));
-                })
-                .collect(Collectors.joining(" | "));
-
-        return String.format("The queue has been filled! Click the %s button within 3 minutes to accept. %s",
-                Emoji.fromUnicode("U+2705"),
-                userStatuses);
     }
 
     private void checkAllAccepted(ButtonInteractionEvent buttonInteractionEvent) {
         boolean allAccepted = userAcceptStateMap.values().stream()
                 .noneMatch(state -> state == AWAITING);
 
-        if (allAccepted) {
+        if (!allAccepted) {
+            notifyService.notifyPoppedQueuePlayerAccept(buttonInteractionEvent, formatQueueStatusMessage(AWAITING));
+        } else {
             LOGGER.info("All users have accepted the queue");
 
-            buttonInteractionEvent.deferEdit().queue();
-            buttonInteractionEvent.getMessage().editMessage("All players have accepted!")
-                    .setComponents(Collections.emptyList())
-                    .queue();
+            notifyService.notifyPoppedQueueAccepted(buttonInteractionEvent, formatQueueStatusMessage(ACCEPTED));
 
-            queueService.resetPlayerQueue();
-            userAcceptStateMap.clear();
-            activeQueueMessageId = 0;
+            reset();
         }
+    }
+
+    private String formatQueueStatusMessage(AcceptState messageFormat) {
+        String userStatuses = userAcceptStateMap.entrySet().stream()
+                .map(entry -> {
+                    User user = entry.getKey();
+                    AcceptState acceptState = entry.getValue();
+                    return user.getAsMention()
+                            + (acceptState == AcceptState.ACCEPTED ?
+                            String.format(" [%s]", checkMarkEmoji)
+                            : String.format(" [%s]", awaitingButton));
+                })
+                .collect(Collectors.joining(" | "));
+
+        return messageFormat.equals(AWAITING) ? String.format("The queue has been filled!" +
+                "\nClick the %s button within %d %s to accept. " +
+                "\nWaiting for all players to accept... %s",
+                checkMarkEmoji, ACCEPT_TIMEOUT_LENGTH, TIME_UNIT.toString().toLowerCase(), userStatuses)
+                : String.format("All players have accepted." +
+                "\n%s", userStatuses);
     }
 
     @Override
     public boolean isActiveQueueMessage(long messageId) {
-        boolean isActive = messageId == activeQueueMessageId;
+        boolean isActive = messageId == getActiveQueueMessageId();
 
-        if (!isActive && messageId != 0 && activeQueueMessageId != 0) {
-            LOGGER.debug("Message ID validation failed: provided={}, active={}", messageId, activeQueueMessageId);
+        if (!isActive && messageId != -1 && getActiveQueueMessageId() != -1) {
+            LOGGER.debug("Message ID validation failed: provided={}, active={}", messageId, getActiveQueueMessageId());
         }
 
         return isActive;
     }
 
     private void setupTimeoutTask(MessageChannel messageChannel) {
-        if (timeoutTask != null && !timeoutTask.isDone()) {
+        if (timeoutTask != null) {
             timeoutTask.cancel(false);
         }
 
         timeoutTask = scheduler.schedule(
                 () -> handleQueueTimeout(messageChannel),
-                ACCEPT_TIMEOUT_MINUTES,
-                TimeUnit.MINUTES
+                ACCEPT_TIMEOUT_LENGTH,
+                TIME_UNIT
         );
 
-        LOGGER.info("Set up queue accept handler timeout for {} {}", ACCEPT_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+        LOGGER.info("Set up queue accept service timeout for {} {}", ACCEPT_TIMEOUT_LENGTH, TIME_UNIT);
     }
 
     private void handleQueueTimeout(MessageChannel messageChannel) {
-        LOGGER.info("Queue accept handler timeout limit reached");
+        LOGGER.info("Queue accept service timeout limit reached. Message channel: {}, messageID: {}",
+                messageChannel, getActiveQueueMessageId());
 
         Set<User> pendingUsers = userAcceptStateMap.entrySet().stream()
                 .filter(entry -> entry.getValue() == AWAITING)
@@ -167,22 +169,40 @@ public class AcceptServiceImpl implements AcceptService {
                 .collect(Collectors.joining(", "));
 
         if (messageChannel != null) {
-            messageChannel.editMessageById(activeQueueMessageId,
-                            String.format("Queue timed out after %d minutes. " +
-                                            "The following players did not respond and received a spanner: %s",
-                                    ACCEPT_TIMEOUT_MINUTES, nonResponders))
-                    .queue(
-                            success -> LOGGER.info("Updated queue timeout message"),
-                            error -> LOGGER.error("Failed to update queue timeout message: {}", error.getMessage())
-                    );
-
-            messageChannel.sendMessage("Queue has timed out. Use /k to join a new queue.")
-                    .queue();
+            notifyService.editPoppedQueueMessage(messageChannel, getActiveQueueMessageId(),
+                    String.format("One or more keeners did not check-in." +
+                            "\nThe following players did not respond and received a spanner:" +
+                            "\n%s" +
+                            "\nThe current queue will be cleared. Use /k to join a new queue.",
+                            nonResponders));
         }
 
+        reset();
+    }
+
+    public long getActiveQueueMessageId() {
+        return this.activeQueueMessageId;
+    }
+
+    private void setActiveQueueMessageId(long messageId) {
+        this.activeQueueMessageId = messageId;
+    }
+
+    private Map<User, AcceptState> getAcceptStateMap() {
+        return this.userAcceptStateMap;
+    }
+
+    @Override
+    public void cancelActiveQueue() {
+        timeoutTask.cancel(false);
+        setActiveQueueMessageId(-1);
+    }
+
+    private synchronized void reset() {
         queueService.resetPlayerQueue();
-        userAcceptStateMap.clear();
-        activeQueueMessageId = 0;
+        timeoutTask.cancel(false);
+        getAcceptStateMap().clear();
+        setActiveQueueMessageId(-1);
     }
 
 }

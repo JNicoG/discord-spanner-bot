@@ -7,6 +7,7 @@ import io.github.jnicog.discord.spanner.bot.service.NotifyService;
 import io.github.jnicog.discord.spanner.bot.service.QueueInteractionOutcome;
 import io.github.jnicog.discord.spanner.bot.service.QueueService;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -82,7 +83,7 @@ public class QueueCommandHandler extends ListenerAdapter {
             return;
         }
 
-        if (!queueService.getQueuePoppedState()) {
+        if (!queueService.isPlayerQueueFull()) {
             buttonInteractionEvent.reply("There is no active queue to accept right now.")
                     .setEphemeral(true)
                     .queue();
@@ -117,11 +118,14 @@ public class QueueCommandHandler extends ListenerAdapter {
             return;
         }
 
+        // Consider adding accept service cancelTimeout here
         queueService.removeUserFromPlayerQueue(user);
         spannerRepository.incrementSpannerCount(user.getIdLong());
-        notifyService.notifyPoppedQueueDeclined(buttonInteractionEvent,
+        notifyService.editPoppedQueueMessage(buttonInteractionEvent.getMessageChannel(),
+                acceptService.getActiveQueueMessageId(),
                 String.format("%s has spannered. The remaining keeners will be returned to the queue.",
                         buttonInteractionEvent.getUser().getAsMention()));
+        acceptService.cancelActiveQueue(); // Consider splitting timeoutTask cancel from setMessageId, set Id here
     }
 
     private void handleInvalidButton() {
@@ -154,31 +158,32 @@ public class QueueCommandHandler extends ListenerAdapter {
                     slashCommandInteractionEvent, ALREADY_IN_QUEUE.getDescription(), true);
             case QUEUE_ALREADY_FULL -> notifyService.sendReply(
                     slashCommandInteractionEvent, QUEUE_ALREADY_FULL.getDescription(), true);
-            case ADDED_TO_QUEUE -> notifyService.sendReply(
+            case ADDED_TO_QUEUE -> notifyService.sendSilentReply(
                     slashCommandInteractionEvent,
-                    String.format("%s%s [%d/%d]",
+                    String.format("%s%s\n[%d/%d] Current queue: %s",
                             slashCommandInteractionEvent.getUser().getAsMention(),
-                            ADDED_TO_QUEUE.getDescription(),
+                            REMOVED_FROM_QUEUE.getDescription(),
                             queueService.showQueue().size(),
-                            MAX_QUEUE_SIZE),
-                    false);
+                            MAX_QUEUE_SIZE,
+                            queueService.showQueue().stream()
+                                    .map(User::getAsMention)
+                                    .collect(Collectors.joining(" "))));
         }
 
         if (queueInteractionOutcome.equals(ADDED_TO_QUEUE)
-                && queueService.isPlayerQueueFull()
-                && !queueService.getQueuePoppedState()) {
+                && queueService.isPlayerQueueFull()) {
 
             LOGGER.info("Queue is full, popping queue with {} members", queueService.showQueue());
 
-            queueService.setQueuePoppedState();
+            MessageChannel messageChannel = slashCommandInteractionEvent.getMessageChannel();
 
             CompletableFuture<Long> queuePopMessage = notifyService.notifyPlayerQueuePopped(
-                    queueService.getPlayerQueue(), slashCommandInteractionEvent.getMessageChannel());
+                    queueService.getPlayerQueue(), messageChannel);
 
             queuePopMessage.thenAccept(messageId -> {
                 LOGGER.info("Queue pop message sent with ID: {}, initializing acceptance tracking", messageId);
 
-                acceptService.initialiseQueue(messageId);
+                acceptService.initialiseAcceptQueue(messageId, messageChannel);
             }).exceptionally(e -> {
                 LOGGER.error("Failed to initialise accept state handler: {}", e.getMessage(), e);
                 queueService.resetPlayerQueue();
@@ -189,32 +194,38 @@ public class QueueCommandHandler extends ListenerAdapter {
     }
 
     private void handleUnkeen(SlashCommandInteractionEvent slashCommandInteractionEvent) {
+        boolean activeQueuePop = queueService.isPlayerQueueFull();
         QueueInteractionOutcome queueInteractionOutcome = queueService.leavePlayerQueue(slashCommandInteractionEvent);
-        boolean activeQueuePop = queueService.getQueuePoppedState();
 
         switch (queueInteractionOutcome) {
             case ALREADY_NOT_IN_QUEUE -> notifyService.sendReply(
                             slashCommandInteractionEvent, ALREADY_NOT_IN_QUEUE.getDescription(), true);
             case REMOVED_FROM_QUEUE -> handleSpanner(slashCommandInteractionEvent,
-                    String.format("%s%s [%d/%d]",
+                    String.format("%s%s\nCurrent queue: %s [%d/%d]",
                             slashCommandInteractionEvent.getUser().getAsMention(),
                             REMOVED_FROM_QUEUE.getDescription(),
+                            queueService.showQueue().stream()
+                                    .map(User::getAsMention)
+                                    .collect(Collectors.joining(" ")),
                             queueService.showQueue().size(),
-                            MAX_QUEUE_SIZE));
+                            MAX_QUEUE_SIZE)
+                    );
         }
 
         if (queueInteractionOutcome.equals(REMOVED_FROM_QUEUE) && activeQueuePop) {
-            notifyService.notifyPoppedQueueDeclined(
-                    slashCommandInteractionEvent/*.getMessageChannel()*/,
-                    String.format("%s declined and has received a spanner." +
-                                    " The remaining players will be returned to the queue.",
+            // Cancel accept service's timeoutTask here, and set messageId after message is edited
+            notifyService.editPoppedQueueMessage(
+                    slashCommandInteractionEvent.getMessageChannel(),
+                    acceptService.getActiveQueueMessageId(),
+                    String.format("%s has spannered. The remaining keeners will be returned to the queue.",
                             slashCommandInteractionEvent.getUser().getAsMention()));
+            acceptService.cancelActiveQueue(); // Consider adding messageId setter here and move cancelTask to above
             spannerRepository.incrementSpannerCount(slashCommandInteractionEvent.getUser().getIdLong());
         }
     }
 
     private void handleSpanner(SlashCommandInteractionEvent slashCommandInteractionEvent, String message) {
-        notifyService.sendReply(slashCommandInteractionEvent, message, false);
+        notifyService.sendSilentReply(slashCommandInteractionEvent, message);
         spannerRepository.incrementSpannerCount(slashCommandInteractionEvent.getUser().getIdLong());
     }
 
@@ -222,12 +233,13 @@ public class QueueCommandHandler extends ListenerAdapter {
         queueService.showQueue();
         notifyService.sendSilentReply(
                 slashCommandInteractionEvent,
-                String.format("[%d/%d] Current keeners: %s",
-                        queueService.showQueue().size(),
-                        MAX_QUEUE_SIZE,
+                String.format("Current keeners: %s [%d/%d]",
                         queueService.showQueue().stream()
                                 .map(User::getAsMention)
-                                .collect(Collectors.joining(", "))));
+                                .collect(Collectors.joining(", ")),
+                        queueService.showQueue().size(),
+                        MAX_QUEUE_SIZE)
+        );
     }
 
     private void handleInvalidCommand() {
