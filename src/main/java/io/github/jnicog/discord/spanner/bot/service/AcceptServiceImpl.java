@@ -37,7 +37,7 @@ public class AcceptServiceImpl implements AcceptService {
     private final ConcurrentHashMap<User, AcceptState> userAcceptStateMap = new ConcurrentHashMap<>(5);
 
     // Consider moving to properties / config
-    public static final TimeUnit TIME_UNIT = TimeUnit.SECONDS;
+    public static final TimeUnit TIME_UNIT = TimeUnit.MINUTES;
     public static final int ACCEPT_TIMEOUT_LENGTH = 5;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
