@@ -3,12 +3,12 @@ package io.github.jnicog.discord.spanner.bot.repository;
 import io.github.jnicog.discord.spanner.bot.model.Spanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Repository;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Service
+@Repository
 public class SpannerRepositoryImpl implements SpannerRepository {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SpannerRepositoryImpl.class);
