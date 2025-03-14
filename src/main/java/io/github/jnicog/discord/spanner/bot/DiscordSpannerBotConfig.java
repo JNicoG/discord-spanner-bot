@@ -5,7 +5,10 @@ import io.github.jnicog.discord.spanner.bot.controller.QueueCommandHandler;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -14,6 +17,8 @@ import org.springframework.core.env.Environment;
 @Configuration
 @Profile("!test")
 public class DiscordSpannerBotConfig {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DiscordSpannerBotConfig.class);
 
     private static final String SPANNER_BOT_TOKEN_ENV = "SPANNER_BOT_TOKEN";
 
@@ -27,12 +32,25 @@ public class DiscordSpannerBotConfig {
                             SPANNER_BOT_TOKEN_ENV));
         }
 
-        return JDABuilder.createDefault(botToken)
+        JDA jda = JDABuilder.createDefault(botToken)
                 .setActivity(Activity.playing("Looking for Spanners"))
                 .enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
                 .addEventListeners(queueCommandHandler)
                 .build()
                 .awaitReady();
+
+        jda.updateCommands().addCommands(
+                Commands.slash("k", "Join the queue"),
+                Commands.slash("keen", "Join the queue"),
+                Commands.slash("unkeen", "Leave the queue"),
+                Commands.slash("keeners", "Show current queue members")
+        ).queue(success -> {
+            LOGGER.info("Registered {} slash commands successfully", success.stream().toList());
+        }, error -> {
+            LOGGER.error("Failed to register slash commands: {}", error.getMessage());
+        });
+
+        return jda;
     }
 
 }
