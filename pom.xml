@@ -21,12 +21,21 @@
 	<developers>
 		<developer/>
 	</developers>
+
+	<distributionManagement>
+		<repository>
+			<id>github</id>
+			<name>GitHub Packages</name>
+			<url>https://maven.pkg.github.com/JNicoG/discord-spanner-bot</url>
+		</repository>
+	</distributionManagement>
 	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
+		<connection>scm:git:git://github.com/JNicoG/discord-spanner-bot.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/JNicoG/discord-spanner-bot.git</developerConnection>
+		<url>https://github.com/JNicoG/discord-spanner-bot</url>
+		<tag>HEAD</tag>
 	</scm>
+
 	<properties>
 		<java.version>23</java.version>
 		<spring-cloud.version>2024.0.0</spring-cloud.version>
