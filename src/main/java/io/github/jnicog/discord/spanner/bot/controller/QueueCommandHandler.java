@@ -160,9 +160,9 @@ public class QueueCommandHandler extends ListenerAdapter {
                     slashCommandInteractionEvent, QUEUE_ALREADY_FULL.getDescription(), true);
             case ADDED_TO_QUEUE -> notifyService.sendSilentReply(
                     slashCommandInteractionEvent,
-                    String.format("%s%s\n[%d/%d] Current queue: %s",
+                    String.format("%s%s\nCurrent queue: [%d/%d]\n%s",
                             slashCommandInteractionEvent.getUser().getAsMention(),
-                            REMOVED_FROM_QUEUE.getDescription(),
+                            ADDED_TO_QUEUE.getDescription(),
                             queueService.showQueue().size(),
                             MAX_QUEUE_SIZE,
                             queueService.showQueue().stream()
@@ -201,14 +201,14 @@ public class QueueCommandHandler extends ListenerAdapter {
             case ALREADY_NOT_IN_QUEUE -> notifyService.sendReply(
                             slashCommandInteractionEvent, ALREADY_NOT_IN_QUEUE.getDescription(), true);
             case REMOVED_FROM_QUEUE -> handleSpanner(slashCommandInteractionEvent,
-                    String.format("%s%s\nCurrent queue: %s [%d/%d]",
+                    String.format("%s%s\nCurrent queue: [%d/%d]\n%s",
                             slashCommandInteractionEvent.getUser().getAsMention(),
                             REMOVED_FROM_QUEUE.getDescription(),
+                            queueService.showQueue().size(),
+                            MAX_QUEUE_SIZE,
                             queueService.showQueue().stream()
                                     .map(User::getAsMention)
-                                    .collect(Collectors.joining(" ")),
-                            queueService.showQueue().size(),
-                            MAX_QUEUE_SIZE)
+                                    .collect(Collectors.joining(" ")))
                     );
         }
 
