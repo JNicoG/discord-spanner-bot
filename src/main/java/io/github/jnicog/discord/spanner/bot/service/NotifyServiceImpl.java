@@ -1,6 +1,5 @@
 package io.github.jnicog.discord.spanner.bot.service;
 
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
@@ -9,21 +8,28 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
 public class NotifyServiceImpl implements NotifyService {
 
-    private Message queuePopMessage;
+    private static final Logger LOGGER = LoggerFactory.getLogger(NotifyServiceImpl.class);
 
     private final Map<Long, Boolean> userAcceptanceStatus = new ConcurrentHashMap<>();
+
+    private static final Button acceptButton = Button.success("acceptButton", Emoji.fromUnicode("U+2705"));
+    private static final Button spannerButton = Button.danger("spannerButton", Emoji.fromUnicode("U+1F527"));
 
     @Autowired
     public NotifyServiceImpl() {
@@ -31,24 +37,28 @@ public class NotifyServiceImpl implements NotifyService {
     }
 
     @Override
-    public void notifyPlayerQueuePopped(Map<User, KeenMetadata> queue, MessageChannel messageChannel) {
-        messageChannel.sendMessage(String.format("The queue has been filled!" +
-                        " Click on the %s button within 3 minutes to accept." +
+    public CompletableFuture<Long> notifyPlayerQueuePopped(Map<User, KeenMetadata> queue, MessageChannel messageChannel) {
+        CompletableFuture<Long> futureMessageId = new CompletableFuture<>();
+
+        MessageCreateAction messageCreateAction = messageChannel.sendMessage(String.format("The queue has been filled!" +
+                        " React using the %s button within 3 minutes to accept." +
                         " %s",
                 Emoji.fromUnicode("U+2705"),
                 queue.keySet()
                         .stream()
                         .map(User::getAsMention)
                         .collect(Collectors.joining(" "))))
-                .queue();
+                .addActionRow(acceptButton, spannerButton);
+        messageCreateAction.queue(message -> {
+            long messageId = message.getIdLong();
+            futureMessageId.complete(messageId);
+            LOGGER.info("Sent queue pop message - ID: {}", messageId);
+        }, error -> {
+            LOGGER.error("Failed to send queue pop message: {}", error.getMessage());
+            futureMessageId.completeExceptionally(error);
+        });
 
-        for (User user : queue.keySet()) {
-            queue.get(user).getKeenInteractionEvent().reply("a")
-                    .setEphemeral(true)
-                    .setActionRow(Button.success("acceptButton", Emoji.fromUnicode("U+2705")))
-                    .setActionRow(Button.danger("spannerButton", Emoji.fromUnicode("U+1F527")))
-                    .queue();
-        }
+        return futureMessageId;
     }
 
     @Override
@@ -83,7 +93,9 @@ public class NotifyServiceImpl implements NotifyService {
     }
 
     @Override
-    public void notifyPoppedQueuePlayerAccept(ButtonInteractionEvent buttonInteractionEvent) {
+    public void notifyPoppedQueuePlayerAccept(ButtonInteractionEvent buttonInteractionEvent,
+                                              String message) {
+        buttonInteractionEvent.getMessage().editMessage(message).queue();
 
     }
 

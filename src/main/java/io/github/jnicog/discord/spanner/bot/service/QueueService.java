@@ -26,6 +26,10 @@ public interface QueueService {
 
     boolean getQueuePoppedState();
 
+    void setQueuePoppedState();
+
+    boolean isPlayerQueueFull();
+
     void resetPlayerQueue();
 
 }

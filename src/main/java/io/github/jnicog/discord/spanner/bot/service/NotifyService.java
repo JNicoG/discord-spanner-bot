@@ -8,10 +8,12 @@ import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 public interface NotifyService {
 
-    void notifyPlayerQueuePopped(Map<User, KeenMetadata> queue, MessageChannel channel);
+    CompletableFuture<Long> notifyPlayerQueuePopped(Map<User, KeenMetadata> queue, MessageChannel channel);
 
     void notifyPoppedQueueAccepted(Set<User> queue, MessageChannel messageChannel);
 
@@ -19,7 +21,7 @@ public interface NotifyService {
 
     void notifyPoppedQueueTimeout(Set<User> queue, MessageChannel messageChannel);
 
-    void notifyPoppedQueuePlayerAccept(ButtonInteractionEvent buttonInteractionEvent);
+    void notifyPoppedQueuePlayerAccept(ButtonInteractionEvent buttonInteractionEvent, String message);
 
     void sendReply(IReplyCallback genericEvent, String message, boolean isEphemeral);
 

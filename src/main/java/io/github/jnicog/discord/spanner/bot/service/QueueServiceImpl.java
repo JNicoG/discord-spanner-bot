@@ -34,7 +34,7 @@ public class QueueServiceImpl implements QueueService {
     private final Map<User, ScheduledFuture<?>> TIMEOUT_TASKS_MAP = new ConcurrentHashMap<>();
 
     // TODO: Move queue properties
-    public static final int MAX_QUEUE_SIZE = 5;
+    public static final int MAX_QUEUE_SIZE = 1;
 
     private static final int USER_TIMEOUT = 1;
 
@@ -81,9 +81,6 @@ public class QueueServiceImpl implements QueueService {
                 SCHEDULER.schedule(() -> removeKeenByTimeout(user), USER_TIMEOUT, TimeUnit.HOURS);
         TIMEOUT_TASKS_MAP.put(user, timeoutKeen);
 
-        if (isPlayerQueueFull() && !getQueuePoppedState()) {
-            setQueuePoppedState();
-        }
     }
 
     @Override

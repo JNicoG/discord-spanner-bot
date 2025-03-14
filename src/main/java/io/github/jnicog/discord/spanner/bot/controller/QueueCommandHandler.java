@@ -2,6 +2,7 @@ package io.github.jnicog.discord.spanner.bot.controller;
 
 import com.google.common.base.Strings;
 import io.github.jnicog.discord.spanner.bot.repository.SpannerRepository;
+import io.github.jnicog.discord.spanner.bot.service.AcceptService;
 import io.github.jnicog.discord.spanner.bot.service.NotifyService;
 import io.github.jnicog.discord.spanner.bot.service.QueueInteractionOutcome;
 import io.github.jnicog.discord.spanner.bot.service.QueueService;
@@ -9,10 +10,13 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static io.github.jnicog.discord.spanner.bot.service.QueueInteractionOutcome.ADDED_TO_QUEUE;
@@ -25,17 +29,22 @@ import static io.github.jnicog.discord.spanner.bot.service.QueueServiceImpl.MAX_
 @Component
 public class QueueCommandHandler extends ListenerAdapter {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(QueueCommandHandler.class);
+
     private final QueueService queueService;
     private final NotifyService notifyService;
     private final SpannerRepository spannerRepository;
+    private final AcceptService acceptService;
 
     @Autowired
     public QueueCommandHandler(QueueService queueService,
                                NotifyService notifyService,
-                               SpannerRepository spannerRepository) {
+                               SpannerRepository spannerRepository,
+                               AcceptService acceptService) {
         this.queueService = queueService;
         this.notifyService = notifyService;
         this.spannerRepository = spannerRepository;
+        this.acceptService = acceptService;
     }
 
     @Override
@@ -56,15 +65,63 @@ public class QueueCommandHandler extends ListenerAdapter {
     }
 
     private void handleAcceptButton(ButtonInteractionEvent buttonInteractionEvent) {
-        /*queueService.updateAcceptList(buttonInteractionEvent.getUser());*/
+        User user = buttonInteractionEvent.getUser();
+        long messageId = buttonInteractionEvent.getMessageIdLong();
+
+        if (!acceptService.isActiveQueueMessage(messageId)) {
+            buttonInteractionEvent.reply("This queue is no longer active.")
+                    .setEphemeral(true)
+                    .queue();
+            return;
+        }
+
+        if (!queueService.getPlayerQueue().containsKey(user)) {
+            buttonInteractionEvent.reply("You are not in the current queue!")
+                    .setEphemeral(true)
+                    .queue();
+            return;
+        }
+
+        if (!queueService.getQueuePoppedState()) {
+            buttonInteractionEvent.reply("There is no active queue to accept right now.")
+                    .setEphemeral(true)
+                    .queue();
+            return;
+        }
+
+        try {
+            acceptService.playerAccept(buttonInteractionEvent);
+        } catch (Exception e) {
+            LOGGER.error("Error processing accept button: {}", e.getMessage(), e);
+            buttonInteractionEvent.reply("Something went wrong while processing your request. Please try again.")
+                    .setEphemeral(true)
+                    .queue();
+        }
     }
 
     private void handleSpannerButton(ButtonInteractionEvent buttonInteractionEvent) {
-        queueService.removeUserFromPlayerQueue(buttonInteractionEvent.getUser());
-        spannerRepository.incrementSpannerCount(buttonInteractionEvent.getUser().getIdLong());
+        User user = buttonInteractionEvent.getUser();
+        long messageId = buttonInteractionEvent.getMessageIdLong();
+
+        if (!acceptService.isActiveQueueMessage(messageId)) {
+            buttonInteractionEvent.reply("This queue is no longer active.")
+                    .setEphemeral(true)
+                    .queue();
+            return;
+        }
+
+        if (!queueService.getPlayerQueue().containsKey(user)) {
+            buttonInteractionEvent.reply("You are not in the current queue!")
+                    .setEphemeral(true)
+                    .queue();
+            return;
+        }
+
+        queueService.removeUserFromPlayerQueue(user);
+        spannerRepository.incrementSpannerCount(user.getIdLong());
         notifyService.notifyPoppedQueueDeclined(buttonInteractionEvent,
                 String.format("%s has spannered. The remaining keeners will be returned to the queue.",
-                buttonInteractionEvent.getUser().getAsMention()));
+                        buttonInteractionEvent.getUser().getAsMention()));
     }
 
     private void handleInvalidButton() {
@@ -107,9 +164,27 @@ public class QueueCommandHandler extends ListenerAdapter {
                     false);
         }
 
-        if (queueInteractionOutcome.equals(ADDED_TO_QUEUE) && queueService.getQueuePoppedState()) {
-            notifyService.notifyPlayerQueuePopped(
+        if (queueInteractionOutcome.equals(ADDED_TO_QUEUE)
+                && queueService.isPlayerQueueFull()
+                && !queueService.getQueuePoppedState()) {
+
+            LOGGER.info("Queue is full, popping queue with {} members", queueService.showQueue());
+
+            queueService.setQueuePoppedState();
+
+            CompletableFuture<Long> queuePopMessage = notifyService.notifyPlayerQueuePopped(
                     queueService.getPlayerQueue(), slashCommandInteractionEvent.getMessageChannel());
+
+            queuePopMessage.thenAccept(messageId -> {
+                LOGGER.info("Queue pop message sent with ID: {}, initializing acceptance tracking", messageId);
+
+                acceptService.initialiseQueue(messageId);
+            }).exceptionally(e -> {
+                LOGGER.error("Failed to initialise accept state handler: {}", e.getMessage(), e);
+                queueService.resetPlayerQueue();
+                return null;
+            });
+
         }
     }
 
