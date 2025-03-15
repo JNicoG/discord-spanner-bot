@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Configuration properties for queue-related settings.
- * Values can be overridden in application.properties or application.yml
+ * TODO: Consider giving each channel queue the option to modify the queue settings
  */
 @Configuration
 @ConfigurationProperties(prefix = "discord.queue")
