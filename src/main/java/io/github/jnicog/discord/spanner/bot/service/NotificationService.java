@@ -19,6 +19,7 @@ public interface NotificationService {
 
     /**
      * For now, only allow check-in accept / decline via button
+     * Edits and updates the check-in message for non-terminal user check-ins
      */
     void updateCheckInStatus(MessageChannel channel, ChannelQueue queue, User user);
 

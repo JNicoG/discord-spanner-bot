@@ -120,17 +120,11 @@ public class NotificationServiceImpl implements NotificationService {
         boolean checkInComplete = queue.getCheckInStatusMap().values()
                 .stream()
                 .allMatch(Boolean::booleanValue);
-        LOGGER.info("checkInComplete = {}", checkInComplete);
-        LOGGER.info("checkInActive = {}", queue.isFull());
 
         String message = queue.isFull() ? buildCheckInMessage(playerStatusList, checkInComplete)
                 : buildCheckInCancelledMessage(queue, user);
 
-        /*String message = checkInComplete
-                ? buildCheckInMessage(playerStatusList, checkInComplete)
-                : buildCheckInCancelledMessage(queue, user);*/
-
-        LOGGER.info("Message: {}", message);
+        LOGGER.debug("Built check-in status update message: {}", message);
 
         LOGGER.info("Editing check-in message with id {} in channel {}",
                 queue.getLastActiveCheckInMessageId(), channel);

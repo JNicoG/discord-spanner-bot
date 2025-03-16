@@ -20,22 +20,22 @@ public class QueueProperties {
     /**
      * Number of units to define how long a player can stay in the queue before being automatically removed.
      */
-    private int userTimeoutLength = 1;
+    private int userTimeoutLength = 20;
 
     /**
      * Time unit for how long a player can stay in the queue before being automatically removed.
      */
-    private TimeUnit userTimeoutUnit = TimeUnit.HOURS;
+    private TimeUnit userTimeoutUnit = TimeUnit.SECONDS;
 
     /**
      * Number of units to define how long players have to check in when the queue is filled.
      */
-    private int checkInTimeoutLength = 5;
+    private int checkInTimeoutLength = 10;
 
     /**
      * Time unit for how long players have to check in when the queue is filled.
      */
-    private TimeUnit checkInTimeoutUnit = TimeUnit.MINUTES;
+    private TimeUnit checkInTimeoutUnit = TimeUnit.SECONDS;
 
     /**
      * Number of units of inactivity before a queue is considered inactive and eligible for cleanup.

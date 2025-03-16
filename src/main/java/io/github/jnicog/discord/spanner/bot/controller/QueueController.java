@@ -165,7 +165,11 @@ public class QueueController extends ListenerAdapter {
             return;
         }
 
+        // queue.playerCheckIn publishes CheckInCompletedEvent and already handles the check-in message editing in here
+        // Adding in a notificationService.updateCheckinStatus within the handleCheckInCompleted method will conflict
         if (queue.playerCheckIn(event)) {
+            // queue.playerCheckIn publishes CheckInCompletedEvent which gets handled before
+            // the method below does.
             notificationService.updateCheckInStatus(event.getMessageChannel(), queue, user);
             return;
         }
@@ -231,8 +235,7 @@ public class QueueController extends ListenerAdapter {
         ChannelQueue queue = event.getQueue();
         MessageChannel channel = event.getChannel();
 
-        notificationService.updateCheckInStatus(channel, queue, event.getUser(), false);
-        // put queue.resetCheckIn logic here
+        notificationService.updateCheckInStatus(channel, queue, event.getUser());
     }
 
     @EventListener
@@ -242,7 +245,7 @@ public class QueueController extends ListenerAdapter {
         ChannelQueue queue = event.getQueue();
         MessageChannel channel = event.getChannel();
 
-        notificationService.updateCHeckInStatus(channel, queue);
+        queue.fullReset();
     }
 
     @EventListener
