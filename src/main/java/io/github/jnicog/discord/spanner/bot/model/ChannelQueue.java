@@ -10,6 +10,7 @@ import io.github.jnicog.discord.spanner.bot.service.QueueEventPublisher;
 import io.github.jnicog.discord.spanner.bot.service.SpannerService;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +38,6 @@ public class ChannelQueue {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     // Check-in state
-    private volatile boolean checkInActive = false;
     private final Map<User, Boolean> checkInStatusMap = new ConcurrentHashMap<>();
     private volatile ScheduledFuture<?> checkInTimeoutTask;
     private volatile long lastActiveCheckInMessageId = -1;
@@ -104,7 +104,7 @@ public class ChannelQueue {
     }
 
     private synchronized void initiateCheckIn(MessageChannel messageChannel) {
-        checkInActive = true;
+        checkInStatusMap.clear();
 
         playerQueue.keySet().forEach(user -> checkInStatusMap.put(user, false));
         checkInTimeoutTask = scheduler.schedule(
@@ -117,7 +117,6 @@ public class ChannelQueue {
          * TODO: Handle existing player timeout tasks - give each player fresh timeout tasks
          * Ensure timeout tasks are always longer than the check-in timeout length
          */
-
         LOGGER.info("Check-in started for channel {}, waiting {} {} for {} players to accept...",
                 messageChannel, queueProperties.getCheckInTimeoutLength(),
                 queueProperties.getCheckInTimeoutUnit().toString().toLowerCase(),
@@ -127,26 +126,29 @@ public class ChannelQueue {
 
     }
 
-    public synchronized boolean playerCheckIn(User user, MessageChannel channel) {
+    public synchronized boolean playerCheckIn(ButtonInteractionEvent event) {
         lastActivityTime = Instant.now();
 
-        if (!checkInActive || !checkInStatusMap.containsKey(user)) {
-            LOGGER.info("Invalid check-in from user {} in channel {} - no active check-in or not in queue",
-                user.getName(), channel.getIdLong());
+        if (!isFull() || !checkInStatusMap.containsKey(event.getUser())) {
+            LOGGER.info("Invalid check-in from user {} in channel {} - no active check-in or not a member of the queue",
+                event.getUser().getName(), event.getChannelIdLong());
             return false;
         }
 
         boolean allCheckedIn = checkInStatusMap.values().stream().allMatch(Boolean::booleanValue);
         if (allCheckedIn) {
-            LOGGER.info("All players checked in for channel {}, completing check-in", channel.getIdLong());
-            completeCheckIn(channel);
+            LOGGER.info("All players checked in for channel {}, check-in completed", event.getChannelIdLong());
+            eventPublisher.publishCheckInCompletedEvent(
+                    new CheckInCompletedEvent(this, event.getMessageChannel()));
         }
 
         return true;
     }
 
     private synchronized void handleCheckInTimeout(MessageChannel messageChannel) {
-        if (!checkInActive) {
+        // If queue is not active, tear down the check-in
+        if (!isFull()) {
+            resetCheckIn();
             return;
         }
 
@@ -167,18 +169,8 @@ public class ChannelQueue {
         resetCheckIn();
     }
 
-    private synchronized void completeCheckIn(MessageChannel channel) {
-        resetCheckIn();
-
-        LOGGER.info("Check-in completed for channel {}", messageChannel.getIdLong());
-        eventPublisher.publishCheckInCompletedEvent(new CheckInCompletedEvent(this, channel));
-    }
-
     public synchronized void cancelCheckIn(MessageChannel channel, User user) {
-        resetCheckIn();
 
-        LOGGER.info("Check-in cancelled for channel {} by user {}", messageChannel.getIdLong(), user.getName());
-        eventPublisher.publishCheckInCancelledEvent(new CheckInCancelledEvent(this, channel, user));
     }
 
     private synchronized void resetCheckIn() {
@@ -186,12 +178,15 @@ public class ChannelQueue {
             checkInTimeoutTask.cancel(false);
         }
 
-        checkInActive = false;
-        checkInStatusMap.clear();
+        // checkInStatusMap.clear(); // Might need to comment this out - needs to be performed after notification
+        // service executes a message edit i.e. end of CheckInCancelledEvent, or in CheckInCompletedEvent
+        // Will cause errors in handleCheckInTimeout and handleCheckInCancelled
+        // setCurrentActiveCheckInMessageId(-1);
     }
 
     public synchronized boolean removePlayer(User user, boolean applySpanner) {
         lastActivityTime = Instant.now();
+        boolean checkInActive = isFull();
 
         if (!playerQueue.containsKey(user)) {
             return false;
@@ -210,10 +205,16 @@ public class ChannelQueue {
         }
 
         if (checkInActive) {
-            cancelCheckIn(messageChannel, user);
+            LOGGER.info("Check-in cancelled for channel {} by user {}", messageChannel.getIdLong(), user.getName());
+            eventPublisher.publishCheckInCancelledEvent(new CheckInCancelledEvent(this, messageChannel, user));
         }
 
+        resetCheckIn();
         return true;
+    }
+
+    public QueueProperties getQueueProperties() {
+        return queueProperties;
     }
 
     public long getChannelId() {
@@ -232,16 +233,20 @@ public class ChannelQueue {
         return playerQueue.keySet();
     }
 
-    public boolean isCheckInActive() {
-        return checkInActive;
-    }
-
-    public Map<User, Boolean> getCheckInStatus() {
+    public Map<User, Boolean> getCheckInStatusMap() {
         return new ConcurrentHashMap<>(checkInStatusMap);
     }
 
     public Instant getLastActivityTime() {
         return lastActivityTime;
+    }
+
+    public void setLastActiveCheckInMessageId(long messageId) {
+        this.lastActiveCheckInMessageId = messageId;
+    }
+
+    public long getLastActiveCheckInMessageId() {
+        return lastActiveCheckInMessageId;
     }
 
     public void shutdown() {

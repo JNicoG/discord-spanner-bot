@@ -3,7 +3,6 @@ package io.github.jnicog.discord.spanner.bot.service;
 import io.github.jnicog.discord.spanner.bot.config.QueueProperties;
 import io.github.jnicog.discord.spanner.bot.model.ChannelQueue;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
-import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -34,6 +33,10 @@ public class ChannelQueueManager {
             LOGGER.info("Creating new queue for channel {}", channel.getIdLong());
             return new ChannelQueue(channel, queueProperties, spannerService, eventPublisher);
         });
+    }
+
+    public synchronized ChannelQueue getQueue(MessageChannel channel) {
+        return channelQueues.getOrDefault(channel, null);
     }
 
     public void removeIfEmpty(MessageChannel channel) {

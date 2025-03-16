@@ -8,15 +8,27 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
+import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
+import net.dv8tion.jda.api.requests.restaction.WebhookMessageEditAction;
+import org.apache.logging.log4j.util.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import static io.github.jnicog.discord.spanner.bot.service.Constants.acceptButton;
+import static io.github.jnicog.discord.spanner.bot.service.Constants.awaitingButton;
+import static io.github.jnicog.discord.spanner.bot.service.Constants.checkMarkEmoji;
+import static io.github.jnicog.discord.spanner.bot.service.Constants.spannerButton;
+
 @Service
 public class NotificationServiceImpl implements NotificationService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(NotificationServiceImpl.class);
 
     private final QueueProperties queueProperties;
 
@@ -35,24 +47,126 @@ public class NotificationServiceImpl implements NotificationService {
                         action,
                         queue.getPlayers().size(),
                         queueProperties.getMaxQueueSize(),
-                        queue.getPlayers().stream().map(User::getAsMention).collect(Collectors.joining(" "))
+                        queue.isEmpty() ? "No players in queue"
+                        : queue.getPlayers().stream().map(User::getAsMention).collect(Collectors.joining(" "))
                 )
         ).mentionRepliedUser(true).queue();
     }
 
     @Override
-    public void sendQueueStatusUpdate(MessageChannel channel, ChannelQueue queue) {
-
-    }
-
-    @Override
     public CompletableFuture<Long> sendCheckInStartedMessage(MessageChannel channel, ChannelQueue queue) {
-        return null;
+        CompletableFuture<Long> futureMessageId = new CompletableFuture<>();
+
+        String playerStatusList = formatPlayerCheckInList(queue.getCheckInStatusMap());
+
+        String checkInMessage = buildCheckInMessage(playerStatusList, false);
+
+        channel.sendMessage(checkInMessage)
+                .addActionRow(acceptButton, spannerButton)
+                .queue(
+                        sentMessage -> {
+                            long messageId = sentMessage.getIdLong();
+                            LOGGER.info("Sent check-in message with ID {} to channel {}",
+                                    messageId, queue.getChannelId());
+
+                            queue.setLastActiveCheckInMessageId(messageId);
+
+                            futureMessageId.complete(messageId);
+                        },
+                        error -> {
+                            LOGGER.error("Failed to send check-in message: {}", error.getMessage());
+                            futureMessageId.completeExceptionally(error);
+                        }
+                );
+
+        return futureMessageId;
+    }
+
+    private String buildCheckInMessage(String playerStatusList, boolean checkInComplete) {
+        if (!checkInComplete) {
+            return String.format("The queue has been filled!" +
+                            "\nClick the %s button within %d %s to accept." +
+                            "\nWaiting for all players to accept..." +
+                            "\n%s",
+                    checkMarkEmoji,
+                    queueProperties.getCheckInTimeoutLength(),
+                    queueProperties.getCheckInTimeoutUnit().toString().toLowerCase(),
+                    playerStatusList);
+        }
+        return String.format("All players have accepted!" +
+                "\n%s",
+                playerStatusList);
+    }
+
+    private String formatPlayerCheckInList(Map<User, Boolean> checkInStatus) {
+        if (checkInStatus.isEmpty()) {
+            return "No players in check-in";
+        }
+
+        return checkInStatus.entrySet().stream()
+                .map(entry -> {
+                    User user = entry.getKey();
+                    boolean hasCheckedIn = entry.getValue();
+                    return String.format("%s [%s]",
+                            user.getAsMention(), hasCheckedIn ? checkMarkEmoji : awaitingButton);
+                })
+                .collect(Collectors.joining(" | "));
     }
 
     @Override
-    public void updateCheckInStatus(ButtonInteractionEvent event, ChannelQueue queue) {
+    public void updateCheckInStatus(MessageChannel channel, ChannelQueue queue, User user) {
+        String playerStatusList = formatPlayerCheckInList(queue.getCheckInStatusMap());
+        // Might need a condition below to check what to do if check-in player count is zero
+        boolean checkInComplete = queue.getCheckInStatusMap().values()
+                .stream()
+                .allMatch(Boolean::booleanValue);
+        LOGGER.info("checkInComplete = {}", checkInComplete);
+        LOGGER.info("checkInActive = {}", queue.isFull());
 
+        String message = queue.isFull() ? buildCheckInMessage(playerStatusList, checkInComplete)
+                : buildCheckInCancelledMessage(queue, user);
+
+        /*String message = checkInComplete
+                ? buildCheckInMessage(playerStatusList, checkInComplete)
+                : buildCheckInCancelledMessage(queue, user);*/
+
+        LOGGER.info("Message: {}", message);
+
+        LOGGER.info("Editing check-in message with id {} in channel {}",
+                queue.getLastActiveCheckInMessageId(), channel);
+
+        MessageEditAction messageEditAction = channel.editMessageById(queue.getLastActiveCheckInMessageId(), message);
+
+        if (!queue.isFull() || (queue.isFull() && checkInComplete)) {
+            messageEditAction.setComponents(Collections.emptyList());
+        } else {
+            messageEditAction.setActionRow(acceptButton, spannerButton);
+        }
+        messageEditAction.queue();
+    }
+
+    private String buildCheckInCancelledMessage(ChannelQueue queue, User user) {
+        LOGGER.info("Check-in cancelled by {} with remaining players: {}", user.getName(),
+                queue.getPlayers().stream().map(User::getAsMention).collect(Collectors.joining(", ")));
+        if (queue.getPlayers().isEmpty()) {
+            return String.format("Check-in cancelled by %s\n" +
+                    "No players remaining in queue.",
+                    user.getAsMention());
+        }
+        return String.format("Check-in cancelled by %s\n" +
+                        "The following remaining players will be returned to the queue: %s",
+                user.getAsMention(),
+                queue.getPlayers().stream().map(User::getAsMention).collect(Collectors.joining(", "))
+        );
+    }
+
+    private String buildCheckInTimedOutMessage(ChannelQueue queue, Set<User> notCheckedInUsers) {
+        return String.format("Check-in has been cancelled.\n" +
+                        "The following players did not check-in on time: %s\n" +
+                        "The following remaining players will be returned to the queue: %s",
+                notCheckedInUsers.stream().map(User::getAsMention).collect(Collectors.joining(", ")),
+                queue.getPlayers().stream().map(User::getAsMention).collect(Collectors.joining(", "))
+        );
     }
 
     @Override
@@ -62,7 +176,10 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void editMessage(MessageChannel channel, long messageId, String content) {
-
+    public void sendCheckInTimeoutMessage(MessageChannel channel, ChannelQueue queue, Set<User> notCheckedInUsers) {
+        String message = buildCheckInTimedOutMessage(queue, notCheckedInUsers);
+        channel.editMessageById(queue.getLastActiveCheckInMessageId(), message).setComponents(Collections.emptyList())
+                .queue();
     }
+
 }

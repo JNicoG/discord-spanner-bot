@@ -4,9 +4,6 @@ import io.github.jnicog.discord.spanner.bot.model.ChannelQueue;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 
-/**
- * Event fired when a user declines a check-in
- */
 public class CheckInCancelledEvent extends QueueEvent {
     private final MessageChannel channel;
     private final User user;
