@@ -79,16 +79,8 @@ public class QueueController extends ListenerAdapter {
 
     private void handleUnkeenCommand(SlashCommandInteractionEvent event, ChannelQueue queue) {
         User user = event.getUser();
-        /**
-         * Used to distinguish a player leaving during check-in from a player leaving a queue normally.
-         * If the queue then becomes empty as a result of a player leaving, then the queue is removed from the
-         * queue manager
-         */
-        // boolean checkInActive = queue.isFull();
 
-        /**
-         * queue.removePlayer already publishes a check-in cancel event which will handle the message editing
-         */
+        // queue.removePlayer already publishes a check-in cancel event which will handle the message editing
         boolean removed = queue.removePlayer(user, true);
 
         if (!removed) {
@@ -97,10 +89,6 @@ public class QueueController extends ListenerAdapter {
         }
 
         notificationService.sendQueueStatusUpdate(event, queue);
-
-/*        if (!queue.isFull()) {
-            notificationService.sendQueueStatusUpdate(event, queue);
-        }*/
 
         // If this is called too soon before other handlers are finished using a queue, this will result in NPEs
         // queueManager.removeQueueIfEmpty(event.getChannel());
