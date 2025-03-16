@@ -1,7 +1,7 @@
 package io.github.jnicog.discord.spanner.bot;
 
 import com.google.common.base.Strings;
-import io.github.jnicog.discord.spanner.bot.controller.QueueCommandHandler;
+import io.github.jnicog.discord.spanner.bot.controller.QueueController;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -23,7 +23,7 @@ public class DiscordSpannerBotConfig {
     private static final String SPANNER_BOT_TOKEN_ENV = "SPANNER_BOT_TOKEN";
 
     @Bean
-    public JDA jda(Environment env, QueueCommandHandler queueCommandHandler) throws InterruptedException {
+    public JDA jda(Environment env, QueueController queueController) throws InterruptedException {
         String botToken = env.getProperty(SPANNER_BOT_TOKEN_ENV);
 
         if (Strings.isNullOrEmpty(botToken)) {
@@ -35,7 +35,7 @@ public class DiscordSpannerBotConfig {
         JDA jda = JDABuilder.createDefault(botToken)
                 .setActivity(Activity.playing("Looking for Spanners"))
                 .enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
-                .addEventListeners(queueCommandHandler)
+                .addEventListeners(queueController)
                 .build()
                 .awaitReady();
 

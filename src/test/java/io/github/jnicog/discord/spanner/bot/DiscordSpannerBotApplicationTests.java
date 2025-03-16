@@ -1,8 +1,9 @@
 package io.github.jnicog.discord.spanner.bot;
 
+import io.github.jnicog.discord.spanner.bot.controller.QueueController;
 import io.github.jnicog.discord.spanner.bot.repository.SpannerRepository;
-import io.github.jnicog.discord.spanner.bot.service.NotifyService;
-import io.github.jnicog.discord.spanner.bot.service.QueueService;
+import io.github.jnicog.discord.spanner.bot.service.ChannelQueueManager;
+import io.github.jnicog.discord.spanner.bot.service.NotificationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,18 +20,22 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class DiscordSpannerBotApplicationTests {
 
 	@Autowired
-	private QueueService queueService;
+	private QueueController queueController;
 
 	@Autowired
-	private NotifyService notifyService;
+	private ChannelQueueManager channelQueueManager;
+
+	@Autowired
+	private NotificationService notificationService;
 
 	@Autowired
 	private SpannerRepository spannerRepository;
 
 	@Test
 	void contextLoads() {
-		assertNotNull(queueService);
-		assertNotNull(notifyService);
+		assertNotNull(queueController);
+		assertNotNull(channelQueueManager);
+		assertNotNull(notificationService);
 		assertNotNull(spannerRepository);
 	}
 
