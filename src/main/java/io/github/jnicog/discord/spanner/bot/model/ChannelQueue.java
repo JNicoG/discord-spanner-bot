@@ -150,6 +150,8 @@ public class ChannelQueue {
     private synchronized void handleCheckInTimeout(MessageChannel messageChannel) {
         // If queue is not active, tear down the check-in
         if (!isFull()) {
+            LOGGER.warn("handleCheckInTimeout task performed on an inactive queue for channel {} - check-in timeout" +
+                            "tasks are not being reset / cancelled correctly on-time!", messageChannel.getIdLong());
             cancelCheckInTimeoutTask();
             return;
         }
