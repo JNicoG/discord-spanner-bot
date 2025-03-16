@@ -2,15 +2,11 @@ package io.github.jnicog.discord.spanner.bot.service;
 
 import io.github.jnicog.discord.spanner.bot.config.QueueProperties;
 import io.github.jnicog.discord.spanner.bot.model.ChannelQueue;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
-import net.dv8tion.jda.api.requests.restaction.WebhookMessageEditAction;
-import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

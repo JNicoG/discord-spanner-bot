@@ -176,8 +176,9 @@ public class ChannelQueue {
             checkInTimeoutTask.cancel(false);
         }
 
-        // checkInStatusMap.clear(); // Might need to comment this out - needs to be performed after notification
-        // service executes a message edit i.e. end of CheckInCancelledEvent, or in CheckInCompletedEvent
+        // checkInStatusMap.clear(); // Might need to comment this out - needs to be performed after
+        // when notificationService executes a message edit
+        // i.e. perform clear() at end of CheckInCancelledEvent, or in CheckInCompletedEvent
         // Will cause errors in handleCheckInTimeout and handleCheckInCancelled
         // setCurrentActiveCheckInMessageId(-1);
     }

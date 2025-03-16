@@ -132,15 +132,6 @@ public class QueueController extends ListenerAdapter {
 
         LOGGER.debug("Handling button interaction: {}", event .getComponentId());
 
-/*        ChannelQueue queue = queueManager.getQueue(event.getMessageChannel());
-
-        if (queue == null) {
-            LOGGER.warn("Channel queue not found - Failed button interaction for button {} in channel {} by user {}",
-                    event.getComponentId(), event.getChannelId(), event.getUser().getName());
-            event.reply("This queue is no longer active!").setEphemeral(true).queue();
-            return;
-        }*/
-
         ChannelQueue queue = queueManager.getOrCreateQueue(event.getChannel());
 
         switch (event.getComponentId()) {
@@ -165,18 +156,12 @@ public class QueueController extends ListenerAdapter {
             return;
         }
 
-        // queue.playerCheckIn publishes CheckInCompletedEvent and already handles the check-in message editing in here
-        // Adding in a notificationService.updateCheckinStatus within the handleCheckInCompleted method will conflict
-        if (queue.playerCheckIn(event)) {
-            // queue.playerCheckIn publishes CheckInCompletedEvent which gets handled before
-            // the method below does.
-            notificationService.updateCheckInStatus(event.getMessageChannel(), queue, user);
-            return;
+        if (!queue.playerCheckIn(event)) {
+            event.reply("Failed to record your check-in. Please try again.")
+                    .setEphemeral(true)
+                    .queue();
         }
 
-        event.reply("Failed to record your check-in. Please try again.")
-                .setEphemeral(true)
-                .queue();
     }
 
     private void handleSpannerButton(ButtonInteractionEvent event, ChannelQueue queue) {
@@ -245,6 +230,7 @@ public class QueueController extends ListenerAdapter {
         ChannelQueue queue = event.getQueue();
         MessageChannel channel = event.getChannel();
 
+        notificationService.updateCheckInStatus(channel, queue, event.getUser());
         queue.fullReset();
     }
 
