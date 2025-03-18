@@ -1,10 +1,14 @@
 package io.github.jnicog.discord.spanner.bot.model;
 
 import io.github.jnicog.discord.spanner.bot.config.QueueProperties;
+import io.github.jnicog.discord.spanner.bot.event.CheckInAcceptEvent;
+import io.github.jnicog.discord.spanner.bot.event.CheckInAlreadyAcceptedEvent;
 import io.github.jnicog.discord.spanner.bot.event.CheckInCancelledEvent;
 import io.github.jnicog.discord.spanner.bot.event.CheckInCompletedEvent;
+import io.github.jnicog.discord.spanner.bot.event.CheckInOutdatedEvent;
 import io.github.jnicog.discord.spanner.bot.event.CheckInStartedEvent;
 import io.github.jnicog.discord.spanner.bot.event.CheckInTimeoutEvent;
+import io.github.jnicog.discord.spanner.bot.event.NonMemberInteractionEvent;
 import io.github.jnicog.discord.spanner.bot.event.PlayerTimeoutEvent;
 import io.github.jnicog.discord.spanner.bot.service.QueueEventPublisher;
 import io.github.jnicog.discord.spanner.bot.service.SpannerService;
@@ -126,32 +130,45 @@ public class ChannelQueue {
 
     }
 
-    public synchronized boolean playerCheckIn(ButtonInteractionEvent event) {
+    public synchronized void playerCheckIn(ButtonInteractionEvent event) {
         lastActivityTime = Instant.now();
         User user = event.getUser();
 
-        if (!isFull() || !checkInStatusMap.containsKey(user)) {
+        if (!checkInStatusMap.containsKey(user)) {
+            eventPublisher.publishNonMemberInteractionEvent(new NonMemberInteractionEvent(this, event));
+            return;
+        }
+
+        if (!isFull()) {
             LOGGER.info("Invalid check-in from user {} in channel {} - no active check-in or not a member of the queue",
                 event.getUser().getName(), event.getChannelIdLong());
-            return false;
+            eventPublisher.publishCheckInOutdatedEvent(new CheckInOutdatedEvent(this, event));
+            return;
+        }
+
+        if (checkInStatusMap.get(user)) {
+            eventPublisher.publishCheckInAlreadyAcceptedEvent(new CheckInAlreadyAcceptedEvent(this, event));
+            return;
         }
 
         checkInStatusMap.replace(user, true);
+
         boolean allCheckedIn = checkInStatusMap.values().stream().allMatch(Boolean::booleanValue);
         if (allCheckedIn) {
             LOGGER.info("All players checked in for channel {}, check-in completed", event.getChannelIdLong());
             eventPublisher.publishCheckInCompletedEvent(
                     new CheckInCompletedEvent(this, event.getMessageChannel(), event.getUser()));
+            return;
         }
 
-        return true;
+        eventPublisher.publishCheckInAcceptEvent(new CheckInAcceptEvent(this, user, messageChannel));
     }
 
     private synchronized void handleCheckInTimeout(MessageChannel messageChannel) {
         // If queue is not active, tear down the check-in
         if (!isFull()) {
             LOGGER.warn("handleCheckInTimeout task performed on an inactive queue for channel {} - check-in timeout" +
-                            "tasks are not being reset / cancelled correctly on-time!", messageChannel.getIdLong());
+                            " tasks are not being reset / cancelled correctly on-time!", messageChannel.getIdLong());
             cancelCheckInTimeoutTask();
             return;
         }
