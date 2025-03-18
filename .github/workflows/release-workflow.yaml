@@ -2,16 +2,8 @@ name: Release Workflow
 
 on:
   workflow_dispatch:
-    inputs:
-      releaseType:
-        description: 'Type of release'
-        required: true
-        default: 'minor'
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
+  # No inputs added - major or minor releases will require manually incrementing the respective version number
+  # in the pom.xml file prior to merging into main branch
 
 permissions:
   contents: write
@@ -65,7 +57,7 @@ jobs:
           if grep -q '\${github.repository}' pom.xml; then
             sed -i "s|\${github.repository}|${{ github.repository }}|g" pom.xml
           fi
-          
+
       - name: Commit release version
         run: |
           # Set remote URL with token for authentication
@@ -85,7 +77,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Calculate next development version
+      - name: Calculate next development version (patch increment only)
         id: next_version
         run: |
           # Get the components of the version
@@ -94,17 +86,7 @@ jobs:
           MINOR=${VERSION_PARTS[1]}
           PATCH=${VERSION_PARTS[2]}
           
-          # Increment based on release type
-          if [[ "${{ github.event.inputs.releaseType }}" == "major" ]]; then
-            MAJOR=$((MAJOR + 1))
-            MINOR=0
-            PATCH=0
-          elif [[ "${{ github.event.inputs.releaseType }}" == "minor" ]]; then
-            MINOR=$((MINOR + 1))
-            PATCH=0
-          else
-            PATCH=$((PATCH + 1))
-          fi
+          PATCH=$((PATCH + 1))
           
           NEXT_VERSION="${MAJOR}.${MINOR}.${PATCH}-SNAPSHOT"
           echo "Next development version: $NEXT_VERSION"
