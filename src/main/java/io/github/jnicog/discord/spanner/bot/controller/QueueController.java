@@ -2,10 +2,14 @@ package io.github.jnicog.discord.spanner.bot.controller;
 
 import com.google.common.base.Strings;
 import io.github.jnicog.discord.spanner.bot.config.QueueProperties;
+import io.github.jnicog.discord.spanner.bot.event.CheckInAcceptEvent;
+import io.github.jnicog.discord.spanner.bot.event.CheckInAlreadyAcceptedEvent;
 import io.github.jnicog.discord.spanner.bot.event.CheckInCancelledEvent;
 import io.github.jnicog.discord.spanner.bot.event.CheckInCompletedEvent;
+import io.github.jnicog.discord.spanner.bot.event.CheckInOutdatedEvent;
 import io.github.jnicog.discord.spanner.bot.event.CheckInStartedEvent;
 import io.github.jnicog.discord.spanner.bot.event.CheckInTimeoutEvent;
+import io.github.jnicog.discord.spanner.bot.event.NonMemberInteractionEvent;
 import io.github.jnicog.discord.spanner.bot.model.ChannelQueue;
 import io.github.jnicog.discord.spanner.bot.service.ChannelQueueManager;
 import io.github.jnicog.discord.spanner.bot.service.NotificationService;
@@ -136,19 +140,17 @@ public class QueueController extends ListenerAdapter {
         User user = event.getUser();
         long messageId = event.getMessageIdLong();
 
-        if (isInteractionOutdated(event, queue, user, messageId)) {
+        if (isInteractionOutdated(queue, user, messageId)) {
+            event.reply("This check-in message is no longer active.").setEphemeral(true).queue();
             return;
         }
 
-        if (!isMemberOfQueue(event, queue, user)) {
+        if (!isMemberOfQueue(queue, user)) {
+            event.reply("You are not a member of this queue!").setEphemeral(true).queue();
             return;
         }
 
-        if (!queue.playerCheckIn(event)) {
-            event.reply("Failed to record your check-in. Please try again.")
-                    .setEphemeral(true)
-                    .queue();
-        }
+        queue.playerCheckIn(event);
 
     }
 
@@ -156,11 +158,13 @@ public class QueueController extends ListenerAdapter {
         User user = event.getUser();
         long messageId = event.getMessageIdLong();
 
-        if (isInteractionOutdated(event, queue, user, messageId)) {
+        if (isInteractionOutdated(queue, user, messageId)) {
+            event.reply("This check-in message is no longer active.").setEphemeral(true).queue();
             return;
         }
 
-        if (!isMemberOfQueue(event, queue, user)) {
+        if (!isMemberOfQueue(queue, user)) {
+            event.reply("You are not a member of this queue!").setEphemeral(true).queue();
             return;
         }
 
@@ -168,37 +172,40 @@ public class QueueController extends ListenerAdapter {
 
     }
 
-    private boolean isInteractionOutdated(ButtonInteractionEvent event, ChannelQueue queue, User user, long messageId) {
+    private boolean isInteractionOutdated(ChannelQueue queue, User user, long messageId) {
         if (queue.getLastActiveCheckInMessageId() != messageId || !queue.isFull()) {
             LOGGER.info("User {} interacted with an outdated check-in message", user.getName());
-            event.reply("This check-in message is no longer active.")
-                    .setEphemeral(true).queue();
             return true;
         }
         return false;
     }
 
-    private boolean isMemberOfQueue(ButtonInteractionEvent event, ChannelQueue queue, User user) {
+    private boolean isMemberOfQueue(ChannelQueue queue, User user) {
         if (!queue.getPlayers().contains(user)) {
             LOGGER.info("User {} interacted with a check-in message for a queue they are not a member of",
                     user.getName());
-            event.reply("You are not a member of this queue!")
-                    .setEphemeral(true)
-                    .queue();
             return false;
         }
         return true;
     }
 
     @EventListener
-    public void handleCheckInStarted(CheckInStartedEvent event) {
-        LOGGER.info("Handling CheckInStartedEvent for channel {}", event.getChannelId());
+    public void handleCheckInAccept(CheckInAcceptEvent event) {
+        LOGGER.info("Handling CheckInAcceptEvent for channel {}", event.getChannelId());
 
         ChannelQueue queue = event.getQueue();
         MessageChannel channel = event.getChannel();
 
-        notificationService.sendCheckInStartedMessage(channel, queue);
-        // The notification service already calls queue.setLastActiveCheckInMessageId(messageId); on future completion
+        notificationService.updateCheckInStatus(channel, queue, event.getUser());
+    }
+
+    @EventListener
+    public void handleCheckInAlreadyAccepted(CheckInAlreadyAcceptedEvent event) {
+        LOGGER.info("Handling CheckInAlreadyAccepted for channel {}", event.getChannelId());
+
+        ButtonInteractionEvent buttonInteractionEvent = event.getButtonInteractionEvent();
+
+        notificationService.sendReply(buttonInteractionEvent, "You have already checked in!", true);
     }
 
     @EventListener
@@ -223,6 +230,25 @@ public class QueueController extends ListenerAdapter {
     }
 
     @EventListener
+    public void handleCheckInOutdated(CheckInOutdatedEvent event) {
+        LOGGER.info("Handling CheckInOutdatedEvent for channel {}", event.getChannelId());
+
+        notificationService.sendReply(event.getButtonInteractionEvent(),
+                "Check-in for this queue is no longer active!", true);
+    }
+
+    @EventListener
+    public void handleCheckInStarted(CheckInStartedEvent event) {
+        LOGGER.info("Handling CheckInStartedEvent for channel {}", event.getChannelId());
+
+        ChannelQueue queue = event.getQueue();
+        MessageChannel channel = event.getChannel();
+
+        notificationService.sendCheckInStartedMessage(channel, queue);
+        // The notification service already calls queue.setLastActiveCheckInMessageId(messageId); on future completion
+    }
+
+    @EventListener
     public void handleCheckInTimeout(CheckInTimeoutEvent event) {
         LOGGER.info("Handling CheckInTimeoutEvent for channel {}", event.getChannelId());
 
@@ -231,6 +257,14 @@ public class QueueController extends ListenerAdapter {
         Set<User> notCheckedInUsers = event.getNotCheckedInUsers();
 
         notificationService.sendCheckInTimeoutMessage(channel, queue, notCheckedInUsers);
+    }
+
+    @EventListener
+    public void handleNonMemberInteractionEvent(NonMemberInteractionEvent event) {
+        LOGGER.info("Handling NonMemberInteractionEvent for channel {}", event.getChannelId());
+
+        notificationService.sendReply(event.getButtonInteractionEvent(),
+                "You are not a member of this queue!", true);
     }
 
 }

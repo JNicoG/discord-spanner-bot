@@ -132,7 +132,11 @@ public class NotificationServiceImpl implements NotificationService {
         } else {
             messageEditAction.setActionRow(acceptButton, spannerButton);
         }
-        messageEditAction.queue();
+        messageEditAction.queue(success -> {
+            LOGGER.debug("Check-in status message successfully edited");
+        }, error -> {
+            LOGGER.error("Failed to update check-in status message: {}", error.getMessage());
+        });
     }
 
     private String buildCheckInCancelledMessage(ChannelQueue queue, User user) {
@@ -161,8 +165,16 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void sendReply(IReplyCallback interactionEvent, String message, boolean isEphemeral) {
-        interactionEvent.deferReply().queue();
-        interactionEvent.getHook().editOriginal(message).queue();
+        interactionEvent.deferReply().queue(success -> {
+            LOGGER.debug("Successfully deferred reply after interaction");
+        }, error -> {
+            LOGGER.error("Failed to defer reply after interaction: {}", error.getMessage());
+        });
+        interactionEvent.getHook().setEphemeral(isEphemeral).editOriginal(message).queue(success -> {
+            LOGGER.debug("Sent reply successfully with isEphemeral={}", isEphemeral);
+        }, error -> {
+            LOGGER.error("Failed to edit original message: {}", error.getMessage());
+        });
     }
 
     @Override

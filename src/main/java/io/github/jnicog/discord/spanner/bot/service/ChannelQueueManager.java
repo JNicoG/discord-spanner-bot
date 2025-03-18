@@ -35,10 +35,6 @@ public class ChannelQueueManager {
         });
     }
 
-    public synchronized ChannelQueue getQueue(MessageChannel channel) {
-        return channelQueues.getOrDefault(channel, null);
-    }
-
     public void removeIfEmpty(MessageChannel channel) {
         channelQueues.computeIfPresent(channel, (c, queue) -> {
             if (queue.isEmpty()) {
@@ -79,6 +75,4 @@ public class ChannelQueueManager {
         channelQueues.clear();
     }
 
-    public void removeQueueIfEmpty(MessageChannel channel) {
-    }
 }
