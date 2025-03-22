@@ -88,7 +88,7 @@ public class QueueController extends ListenerAdapter {
         boolean removed = queue.removePlayer(user, true);
 
         if (!removed) {
-            notificationService.sendReply(event, "You are not currently in the queue!", false);
+            notificationService.sendReply(event, "You are not currently in the queue!", true);
             return;
         }
 
