@@ -165,7 +165,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void sendReply(IReplyCallback interactionEvent, String message, boolean isEphemeral) {
-        interactionEvent.deferReply().queue(success -> {
+        interactionEvent.deferReply().setEphemeral(isEphemeral).queue(success -> {
             LOGGER.debug("Successfully deferred reply after interaction");
         }, error -> {
             LOGGER.error("Failed to defer reply after interaction: {}", error.getMessage());
