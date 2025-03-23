@@ -6,4 +6,6 @@ public interface SpannerService {
 
     void incrementSpannerCount(Long userId);
 
+    int getSpannerCount(Long userId);
+
 }

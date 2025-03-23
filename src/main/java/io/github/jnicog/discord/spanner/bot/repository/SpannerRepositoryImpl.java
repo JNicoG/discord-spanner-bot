@@ -1,3 +1,4 @@
+/*
 package io.github.jnicog.discord.spanner.bot.repository;
 
 import io.github.jnicog.discord.spanner.bot.model.Spanner;
@@ -26,7 +27,7 @@ public class SpannerRepositoryImpl implements SpannerRepository {
     }
 
     @Override
-    public int getSpannerCount(long userId) {
+    public Integer getSpannerCount(long userId) {
         Spanner spanner = spannerMap.get(userId);
         return spanner != null ? spanner.getSpannerCount() : 0;
     }
@@ -47,3 +48,4 @@ public class SpannerRepositoryImpl implements SpannerRepository {
     }
 
 }
+*/
