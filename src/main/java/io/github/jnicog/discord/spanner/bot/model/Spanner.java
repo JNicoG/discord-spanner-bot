@@ -6,16 +6,17 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name="Spanners")
+@Table(name="spanners")
 public class Spanner {
 
     @Id
     private long userId;
 
-    @Column(nullable = false)
+    @Column
     private int spannerCount;
 
     public Spanner() {
+        // Empty constructor
     }
 
     public Spanner(long userId) {

@@ -2,8 +2,9 @@ package io.github.jnicog.discord.spanner.bot.service;
 
 import io.github.jnicog.discord.spanner.bot.model.Spanner;
 import io.github.jnicog.discord.spanner.bot.repository.SpannerRepository;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class SpannerServiceImpl implements SpannerService {
@@ -15,23 +16,23 @@ public class SpannerServiceImpl implements SpannerService {
     }
 
     @Override
-    @Transactional
-    public void incrementSpannerCount(Long userId) {
-        Spanner spanner = spannerRepository.findByUserId(userId);
-
-        if (spanner == null) {
-            spanner = new Spanner(userId);
-            spanner.incrementSpannerCount();
-            spannerRepository.save(spanner);
-        } else {
-            spannerRepository.incrementSpannerCount(userId);
-        }
+    public int getSpannerCount(Long userId) {
+        int id = userId.intValue();
+        return spannerRepository.findById(id).map(Spanner::getSpannerCount).orElse(0);
     }
 
     @Override
-    public int getSpannerCount(Long userId) {
-        Integer count = spannerRepository.getSpannerCount(userId);
-        return count != null ? count : 0;
+    public void incrementSpannerCount(Long userId) {
+        int id = userId.intValue();
+        Optional<Spanner> spanner = spannerRepository.findById(id);
+        if (spanner.isPresent()) {
+            spanner.get().incrementSpannerCount();
+            spannerRepository.save(spanner.get());
+        } else {
+            Spanner newSpanner = new Spanner(userId);
+            newSpanner.incrementSpannerCount();
+            spannerRepository.save(newSpanner);
+        }
     }
 
 }
