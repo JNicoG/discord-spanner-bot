@@ -225,7 +225,7 @@ public class ChannelQueue {
 
         if (applySpanner) {
             LOGGER.info("Applying spanner to user {} in channel {}", user.getName(), messageChannel.getIdLong());
-            spannerService.incrementSpannerCount(user.getIdLong());
+            spannerService.incrementSpannerCount(user.getIdLong(), messageChannel.getIdLong());
         }
 
         if (checkInActive) {

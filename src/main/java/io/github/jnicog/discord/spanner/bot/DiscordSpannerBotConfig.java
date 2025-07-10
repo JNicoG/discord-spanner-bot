@@ -49,7 +49,8 @@ public class DiscordSpannerBotConfig {
                         .addOption(OptionType.USER,
                                 "user",
                                 "The user to perform a lookup against.",
-                                false)
+                                false),
+                Commands.slash("leaderboard", "Display the leaderboard for this message channel")
         ).queue(success -> {
             LOGGER.info("Registered {} slash commands successfully", success.stream().toList());
         }, error -> {

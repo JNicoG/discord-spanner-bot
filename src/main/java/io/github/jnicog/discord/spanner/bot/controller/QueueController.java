@@ -61,11 +61,17 @@ public class QueueController extends ListenerAdapter {
             case "unkeen" -> handleUnkeenCommand(event, queue);
             case "keeners" -> handleKeenersCommand(event, queue);
             case "spanners" -> handleSpannersCommand(event, queue);
+            case "leaderboard" -> handleLeaderboardCommand(event, queue);
             default -> {
                 LOGGER.warn("Unknown slash command: {}", event.getName());
                 event.reply("Error: Unknown command received").setEphemeral(true).queue();
             }
         }
+    }
+
+    private void handleLeaderboardCommand(SlashCommandInteractionEvent event, ChannelQueue queue) {
+
+
     }
 
     private void handleSpannersCommand(SlashCommandInteractionEvent event, ChannelQueue queue) {
@@ -76,7 +82,7 @@ public class QueueController extends ListenerAdapter {
 
         // Query a user's global spanner count for now until database is updated to use
         // userId + channelId as composite key
-        int targetSpannerCount = spannerService.getSpannerCount(targetUser.getIdLong());
+        int targetSpannerCount = spannerService.getSpannerCount(targetUser.getIdLong(), queue.getChannelId());
 
         String replyMessage = String.format("%s has spannered **%d** time%s.",
                 targetUser.getEffectiveName(),
