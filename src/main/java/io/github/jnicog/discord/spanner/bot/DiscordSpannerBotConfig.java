@@ -35,7 +35,7 @@ public class DiscordSpannerBotConfig {
 
         JDA jda = JDABuilder.createDefault(botToken)
                 .setActivity(Activity.playing("Looking for Spanners"))
-                .enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
+                .enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
                 .addEventListeners(queueController)
                 .build()
                 .awaitReady();

@@ -63,7 +63,7 @@ public class ChannelQueue {
         long messageChannelId = messageChannel.getIdLong();
 
         if (playerQueue.containsKey(user)) {
-            LOGGER.info("User {} is already in the queue for channel {}", user.getName(), messageChannelId);
+            LOGGER.info("User {} ({}) is already in the queue for channel {}", user.getName(), user.getIdLong(), messageChannelId);
             return false;
         }
 
@@ -75,8 +75,8 @@ public class ChannelQueue {
         playerQueue.put(user, System.currentTimeMillis());
         schedulePlayerTimeout(user);
 
-        LOGGER.info("Added user {} to queue for channel {}, queue size: {}/{}",
-                user.getName(), messageChannelId, playerQueue.size(), queueProperties.getMaxQueueSize());
+        LOGGER.info("Added user {} ({}) to queue for channel {}, queue size: {}/{}",
+                user.getName(), user.getIdLong(), messageChannelId, playerQueue.size(), queueProperties.getMaxQueueSize());
 
         if (playerQueue.size() >= queueProperties.getMaxQueueSize()) {
             LOGGER.info("Queue filled in channel {}, initiating check-in", messageChannelId);
@@ -94,13 +94,13 @@ public class ChannelQueue {
         );
         timeoutTasks.put(user, playerTimeoutTask);
 
-        LOGGER.debug("Scheduled timeout for user {} in {} {}",
-                user.getName(), queueProperties.getUserTimeoutLength(), queueProperties.getUserTimeoutUnit());
+        LOGGER.debug("Scheduled timeout for user {} ({}) in {} {}",
+                user.getName(), user.getIdLong(), queueProperties.getUserTimeoutLength(), queueProperties.getUserTimeoutUnit());
 
     }
 
     private void handlePlayerTimeout(User user) {
-        LOGGER.info("User {} has timed out in channel {}", user.getName(), getChannelId());
+        LOGGER.info("User {} ({}) has timed out in channel {}", user.getName(), user.getIdLong(), getChannelId());
 
         if (removePlayer(user, false)) {
             eventPublisher.publishPlayerTimeoutEvent(new PlayerTimeoutEvent(this, user));
@@ -140,8 +140,8 @@ public class ChannelQueue {
         }
 
         if (!isFull()) {
-            LOGGER.info("Invalid check-in from user {} in channel {} - no active check-in or not a member of the queue",
-                event.getUser().getName(), event.getChannelIdLong());
+            LOGGER.info("Invalid check-in from user {} ({}) in channel {} - no active check-in or not a member of the queue",
+                event.getUser().getName(), event.getUser().getIdLong(), event.getChannelIdLong());
             eventPublisher.publishCheckInOutdatedEvent(new CheckInOutdatedEvent(this, event));
             return;
         }
@@ -224,7 +224,10 @@ public class ChannelQueue {
         }
 
         if (applySpanner) {
-            LOGGER.info("Applying spanner to user {} in channel {}", user.getName(), messageChannel.getIdLong());
+            LOGGER.info("Applying spanner to user {} ({}) in channel {}",
+                    user.getName(),
+                    user.getIdLong(),
+                    messageChannel.getIdLong());
             spannerService.incrementSpannerCount(user.getIdLong(), messageChannel.getIdLong());
         }
 

@@ -2,6 +2,9 @@ package io.github.jnicog.discord.spanner.bot.service;
 
 import io.github.jnicog.discord.spanner.bot.config.QueueProperties;
 import io.github.jnicog.discord.spanner.bot.model.ChannelQueue;
+import io.github.jnicog.discord.spanner.bot.model.Spanner;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -9,10 +12,15 @@ import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -164,14 +172,28 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void sendReply(IReplyCallback interactionEvent, String message, boolean isEphemeral) {
-        interactionEvent.deferReply().setEphemeral(isEphemeral).queue(success -> {
-            LOGGER.debug("Successfully deferred reply after interaction");
+    public void sendReply(IReplyCallback interactionEvent,
+                          String message,
+                          boolean isEphemeral,
+                          boolean mentionRepliedUser,
+                          Collection<Message.MentionType> mentionTypes) {
+
+        interactionEvent.deferReply()
+                .setEphemeral(isEphemeral)
+                .mentionRepliedUser(mentionRepliedUser)
+                .setAllowedMentions(mentionTypes)
+                .queue(success -> {
+                    LOGGER.debug("Successfully deferred reply after interaction");
         }, error -> {
             LOGGER.error("Failed to defer reply after interaction: {}", error.getMessage());
         });
-        interactionEvent.getHook().setEphemeral(isEphemeral).editOriginal(message).queue(success -> {
-            LOGGER.debug("Sent reply successfully with isEphemeral={}", isEphemeral);
+        interactionEvent.getHook()
+                .setEphemeral(isEphemeral)
+                .editOriginal(message)
+                .mentionRepliedUser(mentionRepliedUser)
+                .setAllowedMentions(mentionTypes)
+                .queue(success -> {
+                    LOGGER.debug("Sent reply successfully with isEphemeral={}", isEphemeral);
         }, error -> {
             LOGGER.error("Failed to edit original message: {}", error.getMessage());
         });
@@ -182,6 +204,54 @@ public class NotificationServiceImpl implements NotificationService {
         String message = buildCheckInTimedOutMessage(queue, notCheckedInUsers);
         channel.editMessageById(queue.getLastActiveCheckInMessageId(), message).setComponents(Collections.emptyList())
                 .queue();
+    }
+
+    @Override
+    public void sendLeaderboardMessage(IReplyCallback interactionEvent, Page<Spanner> leaderboardPage) {
+        Collection<Long> userIds = leaderboardPage.getContent().stream()
+                .map(Spanner::getUserId)
+                .collect(Collectors.toList());
+        LOGGER.debug("Leaderboard page userIds: {}", userIds);
+
+        Objects.requireNonNull(interactionEvent.getGuild()).retrieveMembersByIds(userIds).onSuccess(members -> {
+            LOGGER.debug("Successfully retrieved members list: {}", members);
+            Map<Long, String> memberMentions = members.stream()
+                    .collect(Collectors.toMap(member -> member.getUser().getIdLong(), Member::getAsMention));
+
+            LOGGER.debug("Mapping member userIds to user mentions: {}", memberMentions);
+            String leaderboardMessage = buildLeaderboardMessage(leaderboardPage, memberMentions);
+
+            sendReply(interactionEvent, leaderboardMessage, false, true, Collections.emptySet());
+
+        }).onError(error -> {
+            sendReply(interactionEvent, "Failed to retrieve user data.", false, true, Collections.emptyList());
+            LOGGER.error("Failed to retrieve members for leaderboard: {}", error.getMessage());
+        });
+    }
+
+    private String buildLeaderboardMessage(Page<Spanner> leaderboardPage, Map<Long, String> memberEffectiveNamesMap) {
+        StringBuilder leaderboardMessage = new StringBuilder("**Spanner Leaderboard**\n");
+        List<Spanner> pageList = leaderboardPage.getContent();
+        if (leaderboardPage.isEmpty()) {
+            leaderboardMessage.append("The leaderboard is empty.");
+        } else {
+            for (int i = 0; i < pageList.size(); i++) {
+                Spanner spanner = pageList.get(i);
+                int rank = (leaderboardPage.getNumber() * leaderboardPage.getSize()) + i + 1;
+                leaderboardMessage.append(
+                        String.format("%d. **%s**: **%d** spanner%s\n",
+                                rank,
+                                memberEffectiveNamesMap.getOrDefault(spanner.getUserId(), "Unknown user"),
+                                spanner.getSpannerCount(),
+                                spanner.getSpannerCount() == 1 ? "" : "s"));
+            }
+        }
+        return leaderboardMessage.toString();
+    }
+
+    @Override
+    public void updateLeaderboardMessage(IReplyCallback interactionEvent, List<Spanner> updatedLeaderboardList) {
+        // TODO: Implement pagination
     }
 
 }
