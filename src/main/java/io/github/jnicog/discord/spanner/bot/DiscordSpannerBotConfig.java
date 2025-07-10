@@ -5,6 +5,7 @@ import io.github.jnicog.discord.spanner.bot.controller.QueueController;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.slf4j.Logger;
@@ -43,7 +44,12 @@ public class DiscordSpannerBotConfig {
                 Commands.slash("k", "Join the queue"),
                 Commands.slash("keen", "Join the queue"),
                 Commands.slash("unkeen", "Leave the queue"),
-                Commands.slash("keeners", "Show current queue members")
+                Commands.slash("keeners", "Show current queue members"),
+                Commands.slash("spanners", "Display the number of spanners a user has accumulated")
+                        .addOption(OptionType.USER,
+                                "user",
+                                "The user to perform a lookup against.",
+                                false)
         ).queue(success -> {
             LOGGER.info("Registered {} slash commands successfully", success.stream().toList());
         }, error -> {
