@@ -13,11 +13,13 @@ import io.github.jnicog.discord.spanner.bot.event.NonMemberInteractionEvent;
 import io.github.jnicog.discord.spanner.bot.model.ChannelQueue;
 import io.github.jnicog.discord.spanner.bot.service.ChannelQueueManager;
 import io.github.jnicog.discord.spanner.bot.service.NotificationService;
+import io.github.jnicog.discord.spanner.bot.service.SpannerService;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,14 +31,18 @@ import java.util.stream.Collectors;
 
 @Component
 public class QueueController extends ListenerAdapter {
-    private static Logger LOGGER = LoggerFactory.getLogger(QueueController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(QueueController.class);
 
     private final ChannelQueueManager queueManager;
     private final NotificationService notificationService;
+    private final SpannerService spannerService;
 
-    public QueueController(ChannelQueueManager queueManager, NotificationService notificationService) {
+    public QueueController(ChannelQueueManager queueManager,
+                           NotificationService notificationService,
+                           SpannerService spannerService) {
         this.queueManager = queueManager;
         this.notificationService = notificationService;
+        this.spannerService = spannerService;
     }
 
     @Override
@@ -54,11 +60,30 @@ public class QueueController extends ListenerAdapter {
             case "k", "keen" -> handleKeenCommand(event, queue);
             case "unkeen" -> handleUnkeenCommand(event, queue);
             case "keeners" -> handleKeenersCommand(event, queue);
+            case "spanners" -> handleSpannersCommand(event, queue);
             default -> {
                 LOGGER.warn("Unknown slash command: {}", event.getName());
                 event.reply("Error: Unknown command received").setEphemeral(true).queue();
             }
         }
+    }
+
+    private void handleSpannersCommand(SlashCommandInteractionEvent event, ChannelQueue queue) {
+        // user param input validation already done through Discord API
+        OptionMapping optionalUserParam = event.getOption("user");
+
+        User targetUser = optionalUserParam == null ? event.getUser() : optionalUserParam.getAsUser();
+
+        // Query a user's global spanner count for now until database is updated to use
+        // userId + channelId as composite key
+        int targetSpannerCount = spannerService.getSpannerCount(targetUser.getIdLong());
+
+        String replyMessage = String.format("%s has spannered **%d** time%s.",
+                targetUser.getEffectiveName(),
+                targetSpannerCount,
+                targetSpannerCount == 1 ? "" : "s");
+
+        notificationService.sendReply(event, replyMessage, false);
 
     }
 
@@ -131,7 +156,7 @@ public class QueueController extends ListenerAdapter {
             case "spannerButton" -> handleSpannerButton(event, queue);
             default -> {
                 LOGGER.warn("Unknown button interaction: {}", event.getComponentId());
-                event.reply("Error: unknown button presesd.").setEphemeral(true).queue();
+                event.reply("Error: unknown button pressed.").setEphemeral(true).queue();
             }
         }
     }
