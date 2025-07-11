@@ -1,6 +1,5 @@
 package io.github.jnicog.discord.spanner.bot;
 
-import io.github.jnicog.discord.spanner.bot.repository.SpannerRepository;
 import io.github.jnicog.discord.spanner.bot.service.NotificationService;
 import net.dv8tion.jda.api.JDA;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -15,7 +14,6 @@ public class TestConfig {
     @MockitoBean
     private NotificationService notificationService;
 
-    @MockitoBean
-    private SpannerRepository spannerRepository;
+    // TODO: Separate test configs - config to mock out repository etc for unit tests, config for integration tests
 
 }
