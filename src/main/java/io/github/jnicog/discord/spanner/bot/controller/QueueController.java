@@ -11,9 +11,11 @@ import io.github.jnicog.discord.spanner.bot.event.CheckInStartedEvent;
 import io.github.jnicog.discord.spanner.bot.event.CheckInTimeoutEvent;
 import io.github.jnicog.discord.spanner.bot.event.NonMemberInteractionEvent;
 import io.github.jnicog.discord.spanner.bot.model.ChannelQueue;
+import io.github.jnicog.discord.spanner.bot.model.Spanner;
 import io.github.jnicog.discord.spanner.bot.service.ChannelQueueManager;
 import io.github.jnicog.discord.spanner.bot.service.NotificationService;
 import io.github.jnicog.discord.spanner.bot.service.SpannerService;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -24,8 +26,11 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -61,11 +66,18 @@ public class QueueController extends ListenerAdapter {
             case "unkeen" -> handleUnkeenCommand(event, queue);
             case "keeners" -> handleKeenersCommand(event, queue);
             case "spanners" -> handleSpannersCommand(event, queue);
+            case "leaderboard" -> handleLeaderboardCommand(event, queue);
             default -> {
                 LOGGER.warn("Unknown slash command: {}", event.getName());
                 event.reply("Error: Unknown command received").setEphemeral(true).queue();
             }
         }
+    }
+
+    private void handleLeaderboardCommand(SlashCommandInteractionEvent event, ChannelQueue queue) {
+        Page<Spanner> leaderboardPage = spannerService.getLeaderboard(queue.getChannelId(), 0, 5);
+        LOGGER.debug("Retrieved {} records: {}", leaderboardPage.getNumberOfElements(), leaderboardPage.getContent());
+        notificationService.sendLeaderboardMessage(event, leaderboardPage);
     }
 
     private void handleSpannersCommand(SlashCommandInteractionEvent event, ChannelQueue queue) {
@@ -74,16 +86,14 @@ public class QueueController extends ListenerAdapter {
 
         User targetUser = optionalUserParam == null ? event.getUser() : optionalUserParam.getAsUser();
 
-        // Query a user's global spanner count for now until database is updated to use
-        // userId + channelId as composite key
-        int targetSpannerCount = spannerService.getSpannerCount(targetUser.getIdLong());
+        int targetSpannerCount = spannerService.getSpannerCount(targetUser.getIdLong(), queue.getChannelId());
 
         String replyMessage = String.format("%s has spannered **%d** time%s.",
-                targetUser.getEffectiveName(),
+                targetUser.getAsMention(),
                 targetSpannerCount,
                 targetSpannerCount == 1 ? "" : "s");
 
-        notificationService.sendReply(event, replyMessage, false);
+        notificationService.sendReply(event, replyMessage, false, true, Collections.emptyList());
 
     }
 
@@ -95,9 +105,16 @@ public class QueueController extends ListenerAdapter {
         if (!added) {
             if (queue.isFull()) {
                 notificationService.sendReply(event,
-                        "Queue is already full! You cannot join this queue.", true);
+                        "Queue is already full! You cannot join this queue.",
+                        true,
+                        true,
+                        EnumSet.of(Message.MentionType.USER));
             } else {
-                notificationService.sendReply(event, "You are already in this queue!", true);
+                notificationService.sendReply(event,
+                        "You are already in this queue!",
+                        true,
+                        true,
+                        EnumSet.of(Message.MentionType.USER));
             }
             return;
         }
@@ -113,7 +130,11 @@ public class QueueController extends ListenerAdapter {
         boolean removed = queue.removePlayer(user, true);
 
         if (!removed) {
-            notificationService.sendReply(event, "You are not currently in the queue!", true);
+            notificationService.sendReply(event,
+                    "You are not currently in the queue!",
+                    true,
+                    true,
+                    EnumSet.of(Message.MentionType.USER));
             return;
         }
 
@@ -135,7 +156,9 @@ public class QueueController extends ListenerAdapter {
                         players.size(),
                         queueProperties.getMaxQueueSize(),
                         playerList),
-                false);
+                false,
+                true,
+                Collections.emptyList());
 
     }
 
@@ -230,7 +253,11 @@ public class QueueController extends ListenerAdapter {
 
         ButtonInteractionEvent buttonInteractionEvent = event.getButtonInteractionEvent();
 
-        notificationService.sendReply(buttonInteractionEvent, "You have already checked in!", true);
+        notificationService.sendReply(buttonInteractionEvent,
+                "You have already checked in!",
+                true,
+                true,
+                EnumSet.of(Message.MentionType.USER));
     }
 
     @EventListener
@@ -259,7 +286,10 @@ public class QueueController extends ListenerAdapter {
         LOGGER.info("Handling CheckInOutdatedEvent for channel {}", event.getChannelId());
 
         notificationService.sendReply(event.getButtonInteractionEvent(),
-                "Check-in for this queue is no longer active!", true);
+                "Check-in for this queue is no longer active!",
+                true,
+                true,
+                EnumSet.of(Message.MentionType.USER));
     }
 
     @EventListener
@@ -289,7 +319,10 @@ public class QueueController extends ListenerAdapter {
         LOGGER.info("Handling NonMemberInteractionEvent for channel {}", event.getChannelId());
 
         notificationService.sendReply(event.getButtonInteractionEvent(),
-                "You are not a member of this queue!", true);
+                "You are not a member of this queue!",
+                true,
+                true,
+                EnumSet.of(Message.MentionType.USER));
     }
 
 }

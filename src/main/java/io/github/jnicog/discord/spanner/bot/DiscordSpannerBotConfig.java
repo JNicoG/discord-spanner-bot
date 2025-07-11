@@ -35,7 +35,7 @@ public class DiscordSpannerBotConfig {
 
         JDA jda = JDABuilder.createDefault(botToken)
                 .setActivity(Activity.playing("Looking for Spanners"))
-                .enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
+                .enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
                 .addEventListeners(queueController)
                 .build()
                 .awaitReady();
@@ -49,7 +49,8 @@ public class DiscordSpannerBotConfig {
                         .addOption(OptionType.USER,
                                 "user",
                                 "The user to perform a lookup against.",
-                                false)
+                                false),
+                Commands.slash("leaderboard", "Display the leaderboard for this message channel")
         ).queue(success -> {
             LOGGER.info("Registered {} slash commands successfully", success.stream().toList());
         }, error -> {
