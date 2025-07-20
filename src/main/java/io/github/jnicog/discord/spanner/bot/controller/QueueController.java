@@ -317,8 +317,14 @@ public class QueueController extends ListenerAdapter {
             return;
         }
 
-        // For now, we'll use a simpler approach - just count button clicks instead of reactions
-        // This is more reliable and simpler to implement
+        // Check if the user has already voted
+        if (vote.getVoters().contains(voter.getId())) {
+            event.reply("You have already voted. Duplicate votes are not allowed.").setEphemeral(true).queue();
+            return;
+        }
+
+        // Record the user's vote
+        vote.getVoters().add(voter.getId());
         if (isYesVote) {
             vote.setYesVotes(vote.getYesVotes() + 1);
         } else {
