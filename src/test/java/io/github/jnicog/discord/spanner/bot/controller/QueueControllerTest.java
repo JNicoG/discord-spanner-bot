@@ -3,6 +3,7 @@ package io.github.jnicog.discord.spanner.bot.controller;
 import io.github.jnicog.discord.spanner.bot.service.ChannelQueueManager;
 import io.github.jnicog.discord.spanner.bot.service.NotificationService;
 import io.github.jnicog.discord.spanner.bot.service.SpannerService;
+import io.github.jnicog.discord.spanner.bot.service.SpannerVoteService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,8 +24,11 @@ public class QueueControllerTest {
     @Mock
     private static SpannerService spannerService;
 
+    @Mock
+    private static SpannerVoteService spannerVoteService;
+
     private static final QueueController queueController =
-            new QueueController(queueManager, notificationService, spannerService);
+            new QueueController(queueManager, notificationService, spannerService, spannerVoteService);
 
     public QueueControllerTest() {
         // Empty constructor
@@ -35,6 +39,7 @@ public class QueueControllerTest {
         Assertions.assertNotNull(queueManager);
         Assertions.assertNotNull(notificationService);
         Assertions.assertNotNull(spannerService);
+        Assertions.assertNotNull(spannerVoteService);
         Assertions.assertNotNull(queueController);
     }
 

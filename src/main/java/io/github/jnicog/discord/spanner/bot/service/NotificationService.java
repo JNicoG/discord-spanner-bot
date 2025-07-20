@@ -2,6 +2,7 @@ package io.github.jnicog.discord.spanner.bot.service;
 
 import io.github.jnicog.discord.spanner.bot.model.ChannelQueue;
 import io.github.jnicog.discord.spanner.bot.model.Spanner;
+import io.github.jnicog.discord.spanner.bot.model.SpannerVote;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
@@ -33,5 +34,11 @@ public interface NotificationService {
     void sendLeaderboardMessage(IReplyCallback interactionEvent, Page<Spanner> currentLeaderboardList);
 
     void updateLeaderboardMessage(IReplyCallback interactionEvent, List<Spanner> updatedLeaderboardList);
+
+    CompletableFuture<Long> sendSpannerVotePoll(MessageChannel channel, SpannerVote vote, User targetUser, User initiatorUser);
+
+    void updateSpannerVotePoll(MessageChannel channel, SpannerVote vote, User targetUser);
+
+    void sendVoteCompletedMessage(MessageChannel channel, SpannerVote vote, User targetUser, boolean votePassed);
 
 }

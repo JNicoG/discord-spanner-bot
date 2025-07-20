@@ -50,7 +50,16 @@ public class DiscordSpannerBotConfig {
                                 "user",
                                 "The user to perform a lookup against.",
                                 false),
-                Commands.slash("leaderboard", "Display the leaderboard for this message channel")
+                Commands.slash("leaderboard", "Display the leaderboard for this message channel"),
+                Commands.slash("vote-spanner", "Vote to assign a spanner to a user")
+                        .addOption(OptionType.USER,
+                                "user",
+                                "The user to vote for spanner assignment",
+                                true)
+                        .addOption(OptionType.STRING,
+                                "reason",
+                                "The reason for the spanner vote",
+                                true)
         ).queue(success -> {
             LOGGER.info("Registered {} slash commands successfully", success.stream().toList());
         }, error -> {

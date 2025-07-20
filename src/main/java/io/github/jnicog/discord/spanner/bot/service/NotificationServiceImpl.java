@@ -3,6 +3,7 @@ package io.github.jnicog.discord.spanner.bot.service;
 import io.github.jnicog.discord.spanner.bot.config.QueueProperties;
 import io.github.jnicog.discord.spanner.bot.model.ChannelQueue;
 import io.github.jnicog.discord.spanner.bot.model.Spanner;
+import io.github.jnicog.discord.spanner.bot.model.SpannerVote;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
@@ -29,6 +30,9 @@ import static io.github.jnicog.discord.spanner.bot.service.Constants.acceptButto
 import static io.github.jnicog.discord.spanner.bot.service.Constants.awaitingButton;
 import static io.github.jnicog.discord.spanner.bot.service.Constants.checkMarkEmoji;
 import static io.github.jnicog.discord.spanner.bot.service.Constants.spannerButton;
+import static io.github.jnicog.discord.spanner.bot.service.Constants.yesVoteButton;
+import static io.github.jnicog.discord.spanner.bot.service.Constants.noVoteButton;
+import static io.github.jnicog.discord.spanner.bot.service.Constants.spannerEmoji;
 
 @Service
 public class NotificationServiceImpl implements NotificationService {
@@ -252,6 +256,92 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public void updateLeaderboardMessage(IReplyCallback interactionEvent, List<Spanner> updatedLeaderboardList) {
         // TODO: Implement pagination
+    }
+
+    @Override
+    public CompletableFuture<Long> sendSpannerVotePoll(MessageChannel channel, SpannerVote vote, User targetUser, User initiatorUser) {
+        CompletableFuture<Long> futureMessageId = new CompletableFuture<>();
+
+        String pollMessage = buildSpannerVotePollMessage(vote, targetUser, initiatorUser);
+
+        channel.sendMessage(pollMessage)
+                .addActionRow(yesVoteButton, noVoteButton)
+                .queue(
+                        sentMessage -> {
+                            long messageId = sentMessage.getIdLong();
+                            LOGGER.info("Sent spanner vote poll with ID {} to channel {}",
+                                    messageId, vote.getChannelId());
+                            futureMessageId.complete(messageId);
+                        },
+                        error -> {
+                            LOGGER.error("Failed to send spanner vote poll: {}", error.getMessage());
+                            futureMessageId.completeExceptionally(error);
+                        }
+                );
+
+        return futureMessageId;
+    }
+
+    @Override
+    public void updateSpannerVotePoll(MessageChannel channel, SpannerVote vote, User targetUser) {
+        String updatedMessage = buildSpannerVotePollMessage(vote, targetUser, null);
+        
+        channel.editMessageById(vote.getMessageId(), updatedMessage)
+                .setActionRow(yesVoteButton, noVoteButton)
+                .queue(
+                        success -> LOGGER.debug("Updated spanner vote poll message {}", vote.getMessageId()),
+                        error -> LOGGER.error("Failed to update spanner vote poll: {}", error.getMessage())
+                );
+    }
+
+    @Override
+    public void sendVoteCompletedMessage(MessageChannel channel, SpannerVote vote, User targetUser, boolean votePassed) {
+        String resultMessage = buildVoteCompletedMessage(vote, targetUser, votePassed);
+        
+        channel.editMessageById(vote.getMessageId(), resultMessage)
+                .setComponents(Collections.emptyList())
+                .queue(
+                        success -> LOGGER.info("Sent vote completed message for vote {}", vote.getId()),
+                        error -> LOGGER.error("Failed to send vote completed message: {}", error.getMessage())
+                );
+    }
+
+    private String buildSpannerVotePollMessage(SpannerVote vote, User targetUser, User initiatorUser) {
+        StringBuilder message = new StringBuilder();
+        
+        message.append(spannerEmoji).append(" **Spanner Vote** ").append(spannerEmoji).append("\n\n");
+        message.append("**Target:** ").append(targetUser.getAsMention()).append("\n");
+        
+        if (initiatorUser != null) {
+            message.append("**Initiated by:** ").append(initiatorUser.getAsMention()).append("\n");
+        }
+        
+        message.append("**Reason:** ").append(vote.getReason()).append("\n\n");
+        message.append("**Current Votes:**\n");
+        message.append("✅ **Yes:** ").append(vote.getYesVotes()).append("\n");
+        message.append("❌ **No:** ").append(vote.getNoVotes()).append("\n\n");
+        message.append("Vote closes in 10 minutes. Click a button below to vote!");
+        
+        return message.toString();
+    }
+
+    private String buildVoteCompletedMessage(SpannerVote vote, User targetUser, boolean votePassed) {
+        StringBuilder message = new StringBuilder();
+        
+        message.append(spannerEmoji).append(" **Vote Completed** ").append(spannerEmoji).append("\n\n");
+        message.append("**Target:** ").append(targetUser.getAsMention()).append("\n");
+        message.append("**Reason:** ").append(vote.getReason()).append("\n\n");
+        message.append("**Final Results:**\n");
+        message.append("✅ **Yes:** ").append(vote.getYesVotes()).append("\n");
+        message.append("❌ **No:** ").append(vote.getNoVotes()).append("\n\n");
+        
+        if (votePassed) {
+            message.append("🎉 **Vote PASSED!** ").append(targetUser.getAsMention()).append(" has been assigned a spanner!");
+        } else {
+            message.append("❌ **Vote FAILED.** No spanner assigned.");
+        }
+        
+        return message.toString();
     }
 
 }
