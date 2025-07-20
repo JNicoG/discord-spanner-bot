@@ -123,7 +123,8 @@ public class ChannelQueue {
          */
         LOGGER.info("Check-in started for channel {}, waiting {} {} for {} players to accept...",
                 messageChannel.getIdLong(), queueProperties.getCheckInTimeoutLength(),
-                queueProperties.getCheckInTimeoutUnit().toString().toLowerCase(),
+                io.github.jnicog.discord.spanner.bot.service.TimeUtils.formatTimeUnit(
+                    queueProperties.getCheckInTimeoutLength(), queueProperties.getCheckInTimeoutUnit()),
                 queueProperties.getMaxQueueSize());
 
         eventPublisher.publishCheckInStartedEvent(new CheckInStartedEvent(this, messageChannel));
