@@ -94,7 +94,8 @@ public class NotificationServiceImpl implements NotificationService {
                             "\n%s",
                     checkMarkEmoji,
                     queueProperties.getCheckInTimeoutLength(),
-                    queueProperties.getCheckInTimeoutUnit().toString().toLowerCase(),
+                    io.github.jnicog.discord.spanner.bot.service.TimeUtils.formatTimeUnit(
+                        queueProperties.getCheckInTimeoutLength(), queueProperties.getCheckInTimeoutUnit()),
                     playerStatusList);
         }
         return String.format("All players have accepted!" +
