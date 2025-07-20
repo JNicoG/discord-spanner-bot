@@ -110,11 +110,21 @@ public class QueueController extends ListenerAdapter {
                         true,
                         EnumSet.of(Message.MentionType.USER));
             } else {
-                notificationService.sendReply(event,
-                        "You are already in this queue!",
-                        true,
-                        true,
-                        EnumSet.of(Message.MentionType.USER));
+                // Player is already in queue - try to refresh their timeout
+                boolean refreshed = queue.refreshPlayer(user);
+                if (refreshed) {
+                    notificationService.sendReply(event,
+                            "You are already in this queue! Your keen has been refreshed.",
+                            true,
+                            true,
+                            EnumSet.of(Message.MentionType.USER));
+                } else {
+                    notificationService.sendReply(event,
+                            "You are already in this queue!",
+                            true,
+                            true,
+                            EnumSet.of(Message.MentionType.USER));
+                }
             }
             return;
         }

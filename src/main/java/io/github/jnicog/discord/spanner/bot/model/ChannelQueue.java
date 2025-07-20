@@ -99,6 +99,29 @@ public class ChannelQueue {
 
     }
 
+    public synchronized boolean refreshPlayer(User user) {
+        lastActivityTime = Instant.now();
+        
+        if (!playerQueue.containsKey(user)) {
+            return false;
+        }
+
+        // Update player timestamp
+        playerQueue.put(user, System.currentTimeMillis());
+        
+        // Cancel existing timeout task and schedule a new one
+        ScheduledFuture<?> existingTask = timeoutTasks.get(user);
+        if (existingTask != null) {
+            existingTask.cancel(false);
+        }
+        schedulePlayerTimeout(user);
+
+        LOGGER.info("Refreshed timeout for user {} ({}) in channel {}", 
+                user.getName(), user.getIdLong(), getChannelId());
+        
+        return true;
+    }
+
     private void handlePlayerTimeout(User user) {
         LOGGER.info("User {} ({}) has timed out in channel {}", user.getName(), user.getIdLong(), getChannelId());
 
