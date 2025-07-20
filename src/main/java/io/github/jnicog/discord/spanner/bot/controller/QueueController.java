@@ -14,6 +14,7 @@ import io.github.jnicog.discord.spanner.bot.model.ChannelQueue;
 import io.github.jnicog.discord.spanner.bot.model.Spanner;
 import io.github.jnicog.discord.spanner.bot.service.ChannelQueueManager;
 import io.github.jnicog.discord.spanner.bot.service.NotificationService;
+import io.github.jnicog.discord.spanner.bot.service.QueuePenaltyService;
 import io.github.jnicog.discord.spanner.bot.service.SpannerService;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
@@ -33,6 +34,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.time.Duration;
 
 @Component
 public class QueueController extends ListenerAdapter {
@@ -41,13 +43,16 @@ public class QueueController extends ListenerAdapter {
     private final ChannelQueueManager queueManager;
     private final NotificationService notificationService;
     private final SpannerService spannerService;
+    private final QueuePenaltyService queuePenaltyService;
 
     public QueueController(ChannelQueueManager queueManager,
                            NotificationService notificationService,
-                           SpannerService spannerService) {
+                           SpannerService spannerService,
+                           QueuePenaltyService queuePenaltyService) {
         this.queueManager = queueManager;
         this.notificationService = notificationService;
         this.spannerService = spannerService;
+        this.queuePenaltyService = queuePenaltyService;
     }
 
     @Override
@@ -125,8 +130,23 @@ public class QueueController extends ListenerAdapter {
 
     private void handleUnkeenCommand(SlashCommandInteractionEvent event, ChannelQueue queue) {
         User user = event.getUser();
+        long userId = user.getIdLong();
+        long channelId = queue.getChannelId();
 
-        // queue.removePlayer already publishes a check-in cancel event which will handle the message editing
+        // Check if user is under cooldown penalty
+        if (queuePenaltyService.isUserUnderCooldown(userId, channelId)) {
+            Duration remainingCooldown = queuePenaltyService.getRemainingCooldown(userId, channelId);
+            String cooldownMessage = formatCooldownMessage(remainingCooldown);
+            
+            notificationService.sendReply(event,
+                    "You are currently under cooldown for abusing the queue! " + cooldownMessage,
+                    true,
+                    true,
+                    EnumSet.of(Message.MentionType.USER));
+            return;
+        }
+
+        // Check if user is actually in the queue
         boolean removed = queue.removePlayer(user, true);
 
         if (!removed) {
@@ -138,10 +158,69 @@ public class QueueController extends ListenerAdapter {
             return;
         }
 
+        // Apply penalty for using /unkeen
+        int penaltyTier = queuePenaltyService.applyPenalty(userId, channelId);
+        String penaltyMessage = formatPenaltyMessage(penaltyTier);
+
+        LOGGER.info("User {} ({}) used /unkeen in channel {} and received tier {} penalty", 
+                   user.getName(), userId, channelId, penaltyTier);
+
         notificationService.sendQueueStatusUpdate(event, queue);
+
+        // Send additional ephemeral message about the penalty
+        event.getHook().sendMessage(penaltyMessage)
+             .setEphemeral(true)
+             .queue();
 
         // If this is called too soon before other handlers are finished using a queue, this will result in NPEs
         // queueManager.removeQueueIfEmpty(event.getChannel());
+    }
+
+    private String formatCooldownMessage(Duration remainingCooldown) {
+        long totalSeconds = remainingCooldown.getSeconds();
+        
+        if (totalSeconds < 60) {
+            return String.format("Remaining cooldown: %d seconds", totalSeconds);
+        } else if (totalSeconds < 3600) {
+            long minutes = totalSeconds / 60;
+            long seconds = totalSeconds % 60;
+            if (seconds > 0) {
+                return String.format("Remaining cooldown: %d minutes, %d seconds", minutes, seconds);
+            } else {
+                return String.format("Remaining cooldown: %d minutes", minutes);
+            }
+        } else if (totalSeconds < 86400) {
+            long hours = totalSeconds / 3600;
+            long minutes = (totalSeconds % 3600) / 60;
+            if (minutes > 0) {
+                return String.format("Remaining cooldown: %d hours, %d minutes", hours, minutes);
+            } else {
+                return String.format("Remaining cooldown: %d hours", hours);
+            }
+        } else {
+            long days = totalSeconds / 86400;
+            long hours = (totalSeconds % 86400) / 3600;
+            if (hours > 0) {
+                return String.format("Remaining cooldown: %d days, %d hours", days, hours);
+            } else {
+                return String.format("Remaining cooldown: %d days", days);
+            }
+        }
+    }
+
+    private String formatPenaltyMessage(int penaltyTier) {
+        String duration = switch (penaltyTier) {
+            case 1 -> "1 minute";
+            case 2 -> "1 hour";
+            case 3 -> "1 day";
+            default -> "unknown duration";
+        };
+        
+        return String.format("⚠️ **Queue Penalty Applied** ⚠️\n" +
+                           "You have been given a **Tier %d** penalty (%s cooldown) for leaving the queue.\n" +
+                           "Repeated use of /unkeen within 24 hours will result in longer penalties.\n" +
+                           "Penalty tiers will decay over time if you avoid further penalties.", 
+                           penaltyTier, duration);
     }
 
     private void handleKeenersCommand(SlashCommandInteractionEvent event, ChannelQueue queue) {
