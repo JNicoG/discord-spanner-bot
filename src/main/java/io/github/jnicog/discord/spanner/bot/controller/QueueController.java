@@ -12,9 +12,11 @@ import io.github.jnicog.discord.spanner.bot.event.CheckInTimeoutEvent;
 import io.github.jnicog.discord.spanner.bot.event.NonMemberInteractionEvent;
 import io.github.jnicog.discord.spanner.bot.model.ChannelQueue;
 import io.github.jnicog.discord.spanner.bot.model.Spanner;
+import io.github.jnicog.discord.spanner.bot.model.SpannerVote;
 import io.github.jnicog.discord.spanner.bot.service.ChannelQueueManager;
 import io.github.jnicog.discord.spanner.bot.service.NotificationService;
 import io.github.jnicog.discord.spanner.bot.service.SpannerService;
+import io.github.jnicog.discord.spanner.bot.service.SpannerVoteService;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
@@ -41,13 +43,16 @@ public class QueueController extends ListenerAdapter {
     private final ChannelQueueManager queueManager;
     private final NotificationService notificationService;
     private final SpannerService spannerService;
+    private final SpannerVoteService spannerVoteService;
 
     public QueueController(ChannelQueueManager queueManager,
                            NotificationService notificationService,
-                           SpannerService spannerService) {
+                           SpannerService spannerService,
+                           SpannerVoteService spannerVoteService) {
         this.queueManager = queueManager;
         this.notificationService = notificationService;
         this.spannerService = spannerService;
+        this.spannerVoteService = spannerVoteService;
     }
 
     @Override
@@ -67,6 +72,7 @@ public class QueueController extends ListenerAdapter {
             case "keeners" -> handleKeenersCommand(event, queue);
             case "spanners" -> handleSpannersCommand(event, queue);
             case "leaderboard" -> handleLeaderboardCommand(event, queue);
+            case "vote-spanner" -> handleVoteSpannerCommand(event, queue);
             default -> {
                 LOGGER.warn("Unknown slash command: {}", event.getName());
                 event.reply("Error: Unknown command received").setEphemeral(true).queue();
@@ -162,6 +168,60 @@ public class QueueController extends ListenerAdapter {
 
     }
 
+    private void handleVoteSpannerCommand(SlashCommandInteractionEvent event, ChannelQueue queue) {
+        // Get required parameters
+        OptionMapping userOption = event.getOption("user");
+        OptionMapping reasonOption = event.getOption("reason");
+
+        if (userOption == null || reasonOption == null) {
+            event.reply("Error: Both user and reason parameters are required.").setEphemeral(true).queue();
+            return;
+        }
+
+        User targetUser = userOption.getAsUser();
+        String reason = reasonOption.getAsString().trim();
+
+        if (reason.isEmpty()) {
+            event.reply("Error: Reason cannot be empty.").setEphemeral(true).queue();
+            return;
+        }
+
+        if (targetUser.equals(event.getUser())) {
+            event.reply("Error: You cannot vote to assign a spanner to yourself.").setEphemeral(true).queue();
+            return;
+        }
+
+        if (targetUser.isBot()) {
+            event.reply("Error: You cannot vote to assign a spanner to a bot.").setEphemeral(true).queue();
+            return;
+        }
+
+        // Create the vote
+        SpannerVote vote = spannerVoteService.createVote(
+                queue.getChannelId(), 
+                targetUser.getIdLong(), 
+                event.getUser().getIdLong(), 
+                reason
+        );
+
+        // Defer reply and send poll
+        event.deferReply().queue();
+
+        notificationService.sendSpannerVotePoll(event.getChannel(), vote, targetUser, event.getUser())
+                .thenAccept(messageId -> {
+                    spannerVoteService.updateVoteMessage(vote, messageId);
+                    event.getHook().editOriginal(
+                            String.format("✅ Started spanner vote for %s! Everyone can vote above.",
+                                    targetUser.getAsMention())
+                    ).queue();
+                })
+                .exceptionally(throwable -> {
+                    event.getHook().editOriginal("❌ Failed to create vote poll.").queue();
+                    LOGGER.error("Failed to send vote poll", throwable);
+                    return null;
+                });
+    }
+
     // Handle check-in buttons
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
@@ -177,6 +237,8 @@ public class QueueController extends ListenerAdapter {
         switch (event.getComponentId()) {
             case "acceptButton" -> handleAcceptButton(event, queue);
             case "spannerButton" -> handleSpannerButton(event, queue);
+            case "yesVoteButton" -> handleYesVoteButton(event);
+            case "noVoteButton" -> handleNoVoteButton(event);
             default -> {
                 LOGGER.warn("Unknown button interaction: {}", event.getComponentId());
                 event.reply("Error: unknown button pressed.").setEphemeral(true).queue();
@@ -235,6 +297,45 @@ public class QueueController extends ListenerAdapter {
             return false;
         }
         return true;
+    }
+
+    private void handleYesVoteButton(ButtonInteractionEvent event) {
+        handleVoteButtonInteraction(event, true);
+    }
+
+    private void handleNoVoteButton(ButtonInteractionEvent event) {
+        handleVoteButtonInteraction(event, false);
+    }
+
+    private void handleVoteButtonInteraction(ButtonInteractionEvent event, boolean isYesVote) {
+        long messageId = event.getMessageIdLong();
+        User voter = event.getUser();
+
+        SpannerVote vote = spannerVoteService.findActiveVoteByMessageId(messageId);
+        if (vote == null) {
+            event.reply("This vote is no longer active.").setEphemeral(true).queue();
+            return;
+        }
+
+        // For now, we'll use a simpler approach - just count button clicks instead of reactions
+        // This is more reliable and simpler to implement
+        if (isYesVote) {
+            vote.setYesVotes(vote.getYesVotes() + 1);
+        } else {
+            vote.setNoVotes(vote.getNoVotes() + 1);
+        }
+
+        // Update vote counts
+        spannerVoteService.updateVoteCounts(messageId, vote.getYesVotes(), vote.getNoVotes());
+
+        // Update the poll message
+        User targetUser = event.getJDA().getUserById(vote.getTargetUserId());
+        if (targetUser != null) {
+            notificationService.updateSpannerVotePoll(event.getChannel(), vote, targetUser);
+        }
+
+        event.reply(String.format("✅ Your **%s** vote has been recorded!", isYesVote ? "YES" : "NO"))
+                .setEphemeral(true).queue();
     }
 
     @EventListener
