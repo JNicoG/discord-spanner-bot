@@ -2,7 +2,6 @@ package io.github.jnicog.discord.spanner.bot.notification;
 
 import com.google.common.collect.ImmutableMap;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
-import io.github.jnicog.discord.spanner.bot.event.CheckInEvent;
 import io.github.jnicog.discord.spanner.bot.notification.handler.CommandEventNotificationHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

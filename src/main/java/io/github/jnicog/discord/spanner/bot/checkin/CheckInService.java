@@ -1,13 +1,14 @@
 package io.github.jnicog.discord.spanner.bot.checkin;
 
-import io.github.jnicog.discord.spanner.bot.checkin.event.CheckInResult;
+import io.github.jnicog.discord.spanner.bot.event.CheckInResult;
 
 import java.util.Set;
 
 public interface CheckInService {
-    CheckInSession startCheckIn(long channelId, Set<Long> queueSnapshot);
-    CheckInResult checkIn(long channelId, long userId);
-    CheckInResult cancelCheckIn(long channelId, long userId);
+    void startCheckIn(long channelId, Set<Long> queueSnapshot);
+    CheckInResult userCheckIn(long channelId, long userId);
+    CheckInResult userCancel(long channelId, long userId);
+    CheckInResult completeSession(long channelId);
+    CheckInResult timeoutSession(long channelId);
     boolean hasActiveSession(long channelId);
-
 }

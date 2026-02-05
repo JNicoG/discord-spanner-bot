@@ -3,10 +3,14 @@ package io.github.jnicog.discord.spanner.bot.queue;
 import io.github.jnicog.discord.spanner.bot.config.QueueProperties;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * Manages queues for different text channels.
+ * A text channel (identified by textChannelId: Long) maps to a QueueChannel instance.
+ */
 @Service
 public class ChannelQueueManager implements QueueService {
 
@@ -30,7 +34,7 @@ public class ChannelQueueManager implements QueueService {
     }
 
     @Override
-    public List<Long> showQueue(long textChannelId) {
+    public Set<Long> showQueue(long textChannelId) {
         ChannelQueue channelQueue = getOrCreateChannelQueue(textChannelId);
         return channelQueue.snapshot();
     }

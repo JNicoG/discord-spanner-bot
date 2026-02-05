@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class KeenCommandHandler implements SlashCommandHandler {
@@ -46,7 +47,7 @@ public class KeenCommandHandler implements SlashCommandHandler {
 
         // These two should be joined into one atomic operation
         QueueOutcome outcome = queueService.joinQueue(userId, channelId);
-        List<Long> queueSnapshot = queueService.showQueue(channelId);
+        Set<Long> queueSnapshot = queueService.showQueue(channelId);
 
         int maxQueueSize = queueService.showMaxQueueSize(channelId);
 

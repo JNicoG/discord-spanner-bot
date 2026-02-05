@@ -4,13 +4,13 @@ import io.github.jnicog.discord.spanner.bot.command.InteractionResponder;
 import io.github.jnicog.discord.spanner.bot.queue.QueueOutcome;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class QueueInteractionEvent extends AbstractCommandResult {
 
     private final QueueOutcome queueOutcome;
-    private final List<Long> queueSnapshot;
+    private final Set<Long> queueSnapshot;
     private final int maxQueueSize;
 
     public QueueInteractionEvent(OffsetDateTime eventTime,
@@ -21,7 +21,7 @@ public class QueueInteractionEvent extends AbstractCommandResult {
                                  Map<String, Object> metadata,
                                  InteractionResponder interactionResponder,
                                  QueueOutcome queueOutcome,
-                                 List<Long> queueSnapshot,
+                                 Set<Long> queueSnapshot,
                                  int maxQueueSize) {
         super(eventTime, commandName, userId, channelId, details, metadata, interactionResponder);
         this.queueOutcome = queueOutcome;
@@ -33,7 +33,7 @@ public class QueueInteractionEvent extends AbstractCommandResult {
         return queueOutcome;
     }
 
-    public List<Long> getQueueSnapshot() {
+    public Set<Long> getQueueSnapshot() {
         return queueSnapshot;
     }
 

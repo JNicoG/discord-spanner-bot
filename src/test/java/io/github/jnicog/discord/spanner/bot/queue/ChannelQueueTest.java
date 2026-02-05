@@ -26,12 +26,12 @@ public class ChannelQueueTest {
 
     @Test
     void test_AddUser_QueueAlreadyFull() {
-        long i = 0L;
-        for (; i < QUEUE_CAPACITY; i++) {
-            channelQueue.addUserToQueue(i);
+        long userId = 0L;
+        for (int i = 0; i < QUEUE_CAPACITY; i++) {
+            channelQueue.addUserToQueue(userId + i);
         }
 
-        QueueOutcome outcome = channelQueue.addUserToQueue(i+1);
+        QueueOutcome outcome = channelQueue.addUserToQueue(userId+1);
 
         Assertions.assertEquals(QueueOutcome.QUEUE_FULL, outcome);
     }
@@ -51,10 +51,10 @@ public class ChannelQueueTest {
     @Test
     void test_AddUserAndFillQueue() {
         ArrayList<Long> users = new ArrayList<>();
-        long i = 0L;
-        for (; i < QUEUE_CAPACITY; i++) {
-            users.add(i);
-            channelQueue.addUserToQueue(i);
+        long userId = 0L;
+        for (int i = 0; i < QUEUE_CAPACITY; i++) {
+            users.add(userId + i);
+            channelQueue.addUserToQueue(userId + i);
         }
         Assertions.assertTrue(channelQueue.isFull());
         Assertions.assertTrue(channelQueue.snapshot().containsAll(users));

@@ -21,9 +21,9 @@ public class JdaSlashCommandInteractionResponder implements InteractionResponder
         interaction.reply(content).setEphemeral(false).queue();
     }
 
-    @Override
-    public void editReply(String content) {
-        interaction.getHook().editOriginal(content).queue();
-    }
+//    @Override
+//    public void editReply(String content) {
+//        interaction.getHook().editOriginal(content).queue();
+//    }
 
 }

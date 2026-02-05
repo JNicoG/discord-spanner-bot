@@ -1,6 +1,6 @@
 package io.github.jnicog.discord.spanner.bot.queue;
 
-import java.util.List;
+import java.util.Set;
 
 public interface QueueService {
 
@@ -8,7 +8,7 @@ public interface QueueService {
 
     QueueOutcome leaveQueue(long userId, long textChannelId);
 
-    List<Long> showQueue(long textChannelId);
+    Set<Long> showQueue(long textChannelId);
 
     int showMaxQueueSize(long textChannelId);
 

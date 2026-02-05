@@ -1,7 +1,5 @@
 package io.github.jnicog.discord.spanner.bot.queue;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
@@ -11,8 +9,6 @@ public class ChannelQueue {
     private final int maxSize;
     private final Set<Long> currentQueue;
     private final ReentrantLock lock = new ReentrantLock();
-
-
 
     public ChannelQueue(int maxSize) {
         this.maxSize = maxSize;
@@ -49,17 +45,27 @@ public class ChannelQueue {
     }
 
     public boolean isFull() {
-        return currentQueue.size() >= maxSize;
+        lock.lock();
+        try {
+            return currentQueue.size() >= maxSize;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public boolean isEmpty() {
-        return currentQueue.isEmpty();
-    }
-
-    public List<Long> snapshot() {
         lock.lock();
         try {
-            return new ArrayList<>(currentQueue);
+            return currentQueue.isEmpty();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public Set<Long> snapshot() {
+        lock.lock();
+        try {
+            return Set.copyOf(currentQueue);
         } finally {
             lock.unlock();
         }

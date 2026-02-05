@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
-import java.util.List;
+import java.util.Set;
 
 @Component
 public class KeenersCommandHandler implements SlashCommandHandler {
@@ -39,7 +39,7 @@ public class KeenersCommandHandler implements SlashCommandHandler {
         long userId = context.userId();
         long channelId = context.channelId();
 
-        List<Long> queueSnapshot = queueService.showQueue(channelId);
+        Set<Long> queueSnapshot = queueService.showQueue(channelId);
 
         int maxQueueSize = queueService.showMaxQueueSize(channelId);
 
