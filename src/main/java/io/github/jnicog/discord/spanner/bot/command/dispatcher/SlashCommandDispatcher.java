@@ -51,12 +51,16 @@ public class SlashCommandDispatcher extends ListenerAdapter {
 
             // Unpack and map to domain context
             InteractionResponder interactionResponder = new JdaSlashCommandInteractionResponder(event);
+            Map<String, String> options = event.getOptions().stream()
+                    .collect(HashMap::new, (map, option)
+                            -> map.put(option.getName(), option.getAsString()), HashMap::putAll);
 
             CommandContext context = new CommandContext(
                     event.getTimeCreated(),
                     handler.getCommandName(),
                     event.getUser().getIdLong(),
                     event.getChannelIdLong(),
+                    options,
                     interactionResponder
             );
 

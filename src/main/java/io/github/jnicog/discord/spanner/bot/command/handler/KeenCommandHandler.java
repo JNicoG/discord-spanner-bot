@@ -2,14 +2,15 @@ package io.github.jnicog.discord.spanner.bot.command.handler;
 
 import io.github.jnicog.discord.spanner.bot.command.CommandContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
-import io.github.jnicog.discord.spanner.bot.event.QueueInteractionEvent;
+import io.github.jnicog.discord.spanner.bot.event.queue.PlayerAlreadyQueuedEvent;
+import io.github.jnicog.discord.spanner.bot.event.queue.PlayerJoinedQueueEvent;
+import io.github.jnicog.discord.spanner.bot.event.queue.QueueAlreadyFullEvent;
 import io.github.jnicog.discord.spanner.bot.queue.QueueOutcome;
 import io.github.jnicog.discord.spanner.bot.queue.QueueService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -41,7 +42,6 @@ public class KeenCommandHandler implements SlashCommandHandler {
 
     @Override
     public AbstractCommandResult handleCommand(CommandContext context) {
-        OffsetDateTime eventTime = context.eventTime();
         long userId = context.userId();
         long channelId = context.channelId();
 
@@ -51,17 +51,12 @@ public class KeenCommandHandler implements SlashCommandHandler {
 
         int maxQueueSize = queueService.showMaxQueueSize(channelId);
 
-        return new QueueInteractionEvent(
-                eventTime,
-                getCommandName(),
-                userId,
-                channelId,
-                null,
-                null,
-                context.interactionResponder(),
-                outcome,
-                queueSnapshot,
-                maxQueueSize
-        );
+        return switch(outcome) {
+            case ENQUEUED -> new PlayerJoinedQueueEvent(context, queueSnapshot, maxQueueSize);
+            case QUEUE_FULL -> new QueueAlreadyFullEvent(context);
+            case ALREADY_QUEUED -> new PlayerAlreadyQueuedEvent(context);
+            default -> throw new IllegalStateException("Unexpected queue outcome: " + outcome);
+        };
+
     }
 }

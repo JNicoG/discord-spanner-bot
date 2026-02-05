@@ -26,6 +26,7 @@ public class CheckInServiceImpl implements CheckInService {
         CheckInSession session = new CheckInSession(channelId, queueSnapshot);
         activeSessions.put(channelId, session);
 
+        // Schedule timeout task to cancel session after CHECK_IN_TIMEOUT duration
 //        ScheduledFuture<?> future = taskScheduler.schedule(() -> {
 //            handleTimeout(channelId),
 //            Instant.now().plus(CHECK_IN_TIMEOUT);

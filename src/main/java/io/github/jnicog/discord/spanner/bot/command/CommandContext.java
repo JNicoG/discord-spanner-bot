@@ -1,6 +1,7 @@
 package io.github.jnicog.discord.spanner.bot.command;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.Objects;
 
 public record CommandContext(
@@ -8,6 +9,7 @@ public record CommandContext(
         String commandName,
         long userId,
         long channelId,
+        Map<String, String> options,
         InteractionResponder interactionResponder
 ) {
     public CommandContext {

@@ -2,7 +2,7 @@ package io.github.jnicog.discord.spanner.bot.command.handler;
 
 import io.github.jnicog.discord.spanner.bot.command.CommandContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
-import io.github.jnicog.discord.spanner.bot.event.QueueInteractionEvent;
+import io.github.jnicog.discord.spanner.bot.event.queue.PlayerLeftQueueEvent;
 import io.github.jnicog.discord.spanner.bot.queue.QueueOutcome;
 import io.github.jnicog.discord.spanner.bot.queue.QueueService;
 import org.slf4j.Logger;
@@ -39,21 +39,13 @@ public class UnkeenCommandHandler implements SlashCommandHandler {
         long userId = context.userId();
         long channelId = context.channelId();
 
+        // These two should be joined into one atomic operation
         QueueOutcome outcome = queueService.leaveQueue(userId, channelId);
         Set<Long> queueSnapshot = queueService.showQueue(channelId);
         int maxQueueSize = queueService.showMaxQueueSize(channelId);
 
-        return new QueueInteractionEvent(
-                eventTime,
-                getCommandName(),
-                userId,
-                channelId,
-                null,
-                null,
-                context.interactionResponder(),
-                outcome,
-                queueSnapshot,
-                maxQueueSize
-        );
+        // Must also handle case where user tries to issue /unkeen during an active check-in session.
+
+        return new PlayerLeftQueueEvent(context, queueSnapshot, maxQueueSize);
     }
 }

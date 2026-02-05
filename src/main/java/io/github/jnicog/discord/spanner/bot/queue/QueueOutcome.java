@@ -8,8 +8,5 @@ public enum QueueOutcome {
 
     // Leave queue
     DEQUEUED,
-    NOT_IN_QUEUE,
-
-    // Snapshot
-    QUERY
+    NOT_IN_QUEUE
 }

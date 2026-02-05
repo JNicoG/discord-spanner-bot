@@ -1,7 +1,6 @@
 package io.github.jnicog.discord.spanner.bot.checkin;
 
-import io.github.jnicog.discord.spanner.bot.event.QueueInteractionEvent;
-import io.github.jnicog.discord.spanner.bot.queue.QueueOutcome;
+import io.github.jnicog.discord.spanner.bot.event.queue.PlayerJoinedQueueEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -21,13 +20,12 @@ public class QueueCheckInTrigger {
 
     @EventListener
     @Order(2)
-    public void onQueueInteractionEvent(QueueInteractionEvent event) {
-        boolean justFilledQueue = event.getQueueOutcome() == QueueOutcome.ENQUEUED
-                && event.getQueueSnapshot().size() == event.getMaxQueueSize();
+    public void onQueueInteractionEvent(PlayerJoinedQueueEvent event) {
+        boolean justFilledQueue = event.getUpdatedQueueSnapshot().size() == event.getMaxQueueSize();
 
         if (justFilledQueue) {
-            LOGGER.info("Queue for channel {} filled. Triggering check-in event.", event.getChannelId());
-            checkInService.startCheckIn(event.getChannelId(), event.getQueueSnapshot());
+            LOGGER.info("Queue for channel {} filled. Triggering check-in event.", event.getContext().channelId());
+            checkInService.startCheckIn(event.getContext().channelId(), event.getUpdatedQueueSnapshot());
         }
 
     }
