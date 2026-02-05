@@ -1,4 +1,4 @@
-package io.github.jnicog.discord.spanner.bot.event;
+package io.github.jnicog.discord.spanner.bot.checkin;
 
 public enum CheckInResult {
     CHECKED_IN,

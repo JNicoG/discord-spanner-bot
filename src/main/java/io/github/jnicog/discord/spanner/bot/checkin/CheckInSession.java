@@ -1,7 +1,5 @@
 package io.github.jnicog.discord.spanner.bot.checkin;
 
-import io.github.jnicog.discord.spanner.bot.event.CheckInResult;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +9,7 @@ import java.util.stream.Collectors;
 
 public class CheckInSession {
 
+    private long messageId;
     private final long channelId;
     private final ConcurrentMap<Long, Boolean> userCheckInStatusMap;
     private final ReentrantLock lock = new ReentrantLock();
@@ -77,6 +76,30 @@ public class CheckInSession {
         }
     }
 
+    public Set<Long> getCheckedInUsers() {
+        lock.lock();
+        try {
+            return userCheckInStatusMap.entrySet().stream()
+                    .filter(Map.Entry::getValue)
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toSet());
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public Set<Long> getNotCheckedInUsers() {
+        lock.lock();
+        try {
+            return userCheckInStatusMap.entrySet().stream()
+                    .filter(entry -> !entry.getValue())
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toSet());
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public long getChannelId() {
         return channelId;
     }
@@ -88,6 +111,14 @@ public class CheckInSession {
         } finally {
             lock.unlock();
         }
+    }
+
+    public long getMessageId() {
+        return messageId;
+    }
+
+    public void setMessageId(long messageId) {
+        this.messageId = messageId;
     }
 
 }

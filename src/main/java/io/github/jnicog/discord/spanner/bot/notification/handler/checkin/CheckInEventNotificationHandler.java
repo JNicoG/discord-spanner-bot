@@ -1,20 +1,14 @@
 package io.github.jnicog.discord.spanner.bot.notification.handler.checkin;
 
-import io.github.jnicog.discord.spanner.bot.event.CheckInEvent;
+import io.github.jnicog.discord.spanner.bot.event.checkin.PlayerCheckInEvent;
 import io.github.jnicog.discord.spanner.bot.notification.handler.CommandEventNotificationHandler;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CheckInEventNotificationHandler implements CommandEventNotificationHandler<CheckInEvent> {
-
-//    @Override
-//    public Class<CheckInEvent> handledEventType() {
-//        return CheckInEvent.class;
-//    }
+public class CheckInEventNotificationHandler implements CommandEventNotificationHandler<PlayerCheckInEvent> {
 
     @Override
-    public void handle(CheckInEvent event) {
+    public void handle(PlayerCheckInEvent event) throws Exception {
 
     }
-
 }
