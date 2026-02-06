@@ -9,14 +9,20 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-@Component
+/**
+ * @deprecated
+ * Check-in cancellation is now handled by {@link io.github.jnicog.discord.spanner.bot.command.handler.CancelCheckInButtonHandlerV2}
+ * for button interactions and {@link io.github.jnicog.discord.spanner.bot.command.handler.UnkeenCommandHandlerV2}
+ * for /unkeen during active sessions.
+ */
+@Deprecated
+// @Component - Disabled in favor of V2 handlers
 public class CancelCheckInTrigger {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CancelCheckInTrigger.class);
 
     private final ApplicationEventPublisher eventPublisher;
     private final CheckInService checkInService;
-//    private final SpannerRepository spannerRepository;
 
     public CancelCheckInTrigger(ApplicationEventPublisher eventPublisher, CheckInService checkInService) {
         this.eventPublisher = eventPublisher;
@@ -37,9 +43,6 @@ public class CancelCheckInTrigger {
             case NO_ACTIVE_SESSION -> eventPublisher.publishEvent(new NoActiveSessionEvent(event.getContext()));
             default -> throw new IllegalStateException("Unexpected check-in cancellation result: " + checkInResult);
         }
-
-        // perform repository call
-        // spannerRepository.incrementSpanner(userId, channelId);
 
     }
 }

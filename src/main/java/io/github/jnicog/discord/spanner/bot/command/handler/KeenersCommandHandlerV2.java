@@ -4,8 +4,6 @@ import io.github.jnicog.discord.spanner.bot.command.SlashCommandContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResultV2;
 import io.github.jnicog.discord.spanner.bot.event.queue.QueueQueryEventV2;
 import io.github.jnicog.discord.spanner.bot.queue.QueueService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
@@ -17,7 +15,6 @@ import java.util.Set;
 @Component
 public class KeenersCommandHandlerV2 implements SlashCommandHandlerV2 {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(KeenersCommandHandlerV2.class);
 
     private final QueueService queueService;
 

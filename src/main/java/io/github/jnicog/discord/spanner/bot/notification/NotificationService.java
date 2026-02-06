@@ -12,9 +12,13 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * Service consumes AbstractCommandResults and sends notifications as needed.
+ * V1 notification service that consumes AbstractCommandResults and sends notifications.
+ *
+ * @deprecated Use {@link NotificationServiceV2} instead which works with V2 events
+ * and response resolvers for better decoupling.
  */
-@Service
+@Deprecated
+// @Service - Disabled in favor of NotificationServiceV2
 public class NotificationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NotificationService.class);

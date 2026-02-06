@@ -1,6 +1,7 @@
 package io.github.jnicog.discord.spanner.bot.command.handler;
 
 import io.github.jnicog.discord.spanner.bot.checkin.CancelResult;
+import io.github.jnicog.discord.spanner.bot.checkin.CheckInAttemptResult;
 import io.github.jnicog.discord.spanner.bot.checkin.CheckInService;
 import io.github.jnicog.discord.spanner.bot.command.SlashCommandContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResultV2;
@@ -13,13 +14,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
 import java.util.Set;
 
 /**
  * V2 handler for the /unkeen command.
  * Uses SlashCommandContext and returns V2 events.
  * If there's an active check-in session and the user is a participant,
- * the session is cancelled and remaining users are re-queued.
+ * the session is cancelled and remaining users stay in queue.
  */
 @Component
 public class UnkeenCommandHandlerV2 implements SlashCommandHandlerV2 {
@@ -44,37 +46,51 @@ public class UnkeenCommandHandlerV2 implements SlashCommandHandlerV2 {
         long userId = context.userId();
         long channelId = context.channelId();
 
-        // Check if there's an active check-in session and user is a participant
-        if (checkInService.hasActiveSession(channelId)) {
-            Set<Long> sessionParticipants = checkInService.getSessionParticipants(channelId);
-
-            if (sessionParticipants.contains(userId)) {
-                LOGGER.info("User {} is using /unkeen during active check-in in channel {}", userId, channelId);
-
-                // Cancel the session and get remaining users
-                CancelResult cancelResult = checkInService.cancelAndGetRemainingUsers(channelId, userId);
-
-                if (cancelResult.result() == io.github.jnicog.discord.spanner.bot.checkin.CheckInAttemptResult.SESSION_CANCELLED) {
-                    // Remove the cancelling user from the queue
-                    // (remaining users stay in the queue - they were never removed)
-                    queueService.leaveQueue(userId, channelId);
-                    LOGGER.debug("Removed cancelling user {} from queue in channel {}", userId, channelId);
-
-                    // Get the updated queue snapshot (should now exclude the cancelling user)
-                    Set<Long> queueSnapshot = queueService.showQueue(channelId);
-                    int maxQueueSize = queueService.showMaxQueueSize(channelId);
-
-                    return new UnkeenDuringCheckInEventV2(
-                            context,
-                            queueSnapshot,
-                            maxQueueSize,
-                            cancelResult.messageId()
-                    );
-                }
-            }
+        // Try to handle as check-in cancellation first
+        Optional<AbstractCommandResultV2<?>> checkInCancellation = tryHandleCheckInCancellation(context, userId, channelId);
+        if (checkInCancellation.isPresent()) {
+            return checkInCancellation.get();
         }
 
         // Normal unkeen flow - no active session or user is not a participant
+        return handleNormalUnkeen(context, userId, channelId);
+    }
+
+    private Optional<AbstractCommandResultV2<?>> tryHandleCheckInCancellation(
+            SlashCommandContext context, long userId, long channelId) {
+
+        if (!checkInService.hasActiveSession(channelId)) {
+            return Optional.empty();
+        }
+
+        Set<Long> sessionParticipants = checkInService.getSessionParticipants(channelId);
+        if (!sessionParticipants.contains(userId)) {
+            return Optional.empty();
+        }
+
+        LOGGER.info("User {} is using /unkeen during active check-in in channel {}", userId, channelId);
+
+        CancelResult cancelResult = checkInService.cancelAndGetRemainingUsers(channelId, userId);
+        if (cancelResult.result() != CheckInAttemptResult.SESSION_CANCELLED) {
+            return Optional.empty();
+        }
+
+        // Remove the cancelling user from the queue (remaining users stay)
+        queueService.leaveQueue(userId, channelId);
+        LOGGER.debug("Removed cancelling user {} from queue in channel {}", userId, channelId);
+
+        Set<Long> queueSnapshot = queueService.showQueue(channelId);
+        int maxQueueSize = queueService.showMaxQueueSize(channelId);
+
+        return Optional.of(new UnkeenDuringCheckInEventV2(
+                context,
+                queueSnapshot,
+                maxQueueSize,
+                cancelResult.messageId()
+        ));
+    }
+
+    private AbstractCommandResultV2<?> handleNormalUnkeen(SlashCommandContext context, long userId, long channelId) {
         QueueOutcome outcome = queueService.leaveQueue(userId, channelId);
         Set<Long> queueSnapshot = queueService.showQueue(channelId);
         int maxQueueSize = queueService.showMaxQueueSize(channelId);

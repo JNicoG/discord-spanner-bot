@@ -6,7 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-@Component
+/**
+ * @deprecated V1 notification handler. Use V2 response resolvers instead.
+ * @see io.github.jnicog.discord.spanner.bot.notification.resolver.ExpiredSessionCheckInResponseResolverV2
+ */
+@Deprecated
+// @Component - Disabled in favor of V2 response resolvers
 public class ExpiredSessionCheckInEventNotificationHandler implements CommandEventNotificationHandler<ExpiredSessionCheckInEvent> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExpiredSessionCheckInEventNotificationHandler.class);

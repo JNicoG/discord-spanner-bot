@@ -6,7 +6,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
 
-@Component
+/**
+ * @deprecated V1 notification handler. Use V2 response resolvers instead.
+ * @see io.github.jnicog.discord.spanner.bot.notification.resolver.PlayerJoinedQueueResponseResolverV2
+ */
+@Deprecated
+// @Component - Disabled in favor of V2 response resolvers
 public class PlayerJoinedQueueEventNotificationHandler implements CommandEventNotificationHandler<PlayerJoinedQueueEvent> {
 
     @Override

@@ -4,7 +4,12 @@ import io.github.jnicog.discord.spanner.bot.event.queue.CheckInActiveEvent;
 import io.github.jnicog.discord.spanner.bot.notification.handler.CommandEventNotificationHandler;
 import org.springframework.stereotype.Component;
 
-@Component
+/**
+ * @deprecated V1 notification handler. Check-in during active session is now handled
+ * by UnkeenCommandHandlerV2 which allows cancellation during check-in.
+ */
+@Deprecated
+// @Component - Disabled in favor of V2 handlers
 public class CheckInActiveEventNotificationHandler implements CommandEventNotificationHandler<CheckInActiveEvent> {
 
     @Override

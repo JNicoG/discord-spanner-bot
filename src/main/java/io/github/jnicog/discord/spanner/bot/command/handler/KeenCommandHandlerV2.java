@@ -7,8 +7,6 @@ import io.github.jnicog.discord.spanner.bot.event.queue.PlayerJoinedQueueEventV2
 import io.github.jnicog.discord.spanner.bot.event.queue.QueueAlreadyFullEventV2;
 import io.github.jnicog.discord.spanner.bot.queue.QueueOutcome;
 import io.github.jnicog.discord.spanner.bot.queue.QueueService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -21,7 +19,6 @@ import java.util.Set;
 @Component
 public class KeenCommandHandlerV2 implements SlashCommandHandlerV2 {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(KeenCommandHandlerV2.class);
 
     private final QueueService queueService;
 
