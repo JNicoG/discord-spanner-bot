@@ -4,7 +4,7 @@ import io.github.jnicog.discord.spanner.bot.checkin.CheckInAttemptResult;
 import io.github.jnicog.discord.spanner.bot.checkin.CheckInService;
 import io.github.jnicog.discord.spanner.bot.command.ButtonContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
-import io.github.jnicog.discord.spanner.bot.event.checkin.CheckInExpiredSessionEvent;
+import io.github.jnicog.discord.spanner.bot.event.checkin.ExpiredSessionCheckInEvent;
 import io.github.jnicog.discord.spanner.bot.event.checkin.NoActiveSessionEvent;
 import io.github.jnicog.discord.spanner.bot.event.checkin.PlayerAlreadyCheckedInEvent;
 import io.github.jnicog.discord.spanner.bot.event.checkin.PlayerCheckInEvent;
@@ -51,7 +51,7 @@ public class CheckInButtonHandler implements ButtonCommandHandler {
             case ALREADY_CHECKED_IN -> new PlayerAlreadyCheckedInEvent(context);
             case UNAUTHORISED -> new UnauthorisedCheckInEvent(context);
             case NO_ACTIVE_SESSION -> new NoActiveSessionEvent(context);
-            case EXPIRED_SESSION -> new CheckInExpiredSessionEvent(context, buttonMessageId);
+            case EXPIRED_SESSION -> new ExpiredSessionCheckInEvent(context);
             default -> throw new IllegalStateException("Unexpected check-in result: " + checkInResult);
         };
     }

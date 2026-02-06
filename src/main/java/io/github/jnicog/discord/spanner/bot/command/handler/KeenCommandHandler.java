@@ -41,7 +41,7 @@ public class KeenCommandHandler implements SlashCommandHandler {
     }
 
     @Override
-    public AbstractCommandResult handleCommand(CommandContext context) {
+    public AbstractCommandResult<?> handleCommand(CommandContext context) {
         long userId = context.userId();
         long channelId = context.channelId();
 

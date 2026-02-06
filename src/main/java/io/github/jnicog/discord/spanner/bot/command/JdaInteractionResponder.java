@@ -36,9 +36,8 @@ public class JdaInteractionResponder implements InteractionResponder {
         );
     }
 
-//    @Override
-//    public void editReply(String content) {
-//        interaction.getHook().editOriginal(content).queue();
-//    }
+    @Override
+    public void updateMessageContent(String content, long messageId) {
 
+    }
 }

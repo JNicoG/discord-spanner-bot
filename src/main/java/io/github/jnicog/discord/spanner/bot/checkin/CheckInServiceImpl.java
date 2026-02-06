@@ -1,6 +1,8 @@
 package io.github.jnicog.discord.spanner.bot.checkin;
 
 import io.github.jnicog.discord.spanner.bot.event.checkin.CheckInStartedEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +16,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class CheckInServiceImpl implements CheckInService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CheckInServiceImpl.class);
 
     // Change to use QueueProperties if needed
     private static final Duration CHECK_IN_TIMEOUT = Duration.of(5, ChronoUnit.MINUTES);
@@ -58,6 +62,7 @@ public class CheckInServiceImpl implements CheckInService {
         if (session == null) {
             return CheckInAttemptResult.NO_ACTIVE_SESSION;
         }
+        LOGGER.debug("User {} attempting to check-in to channel {} with messageId {}. Current session messageId: {}", userId, channelId, messageId, session.getMessageId());
         if (messageId != session.getMessageId()) {
             return CheckInAttemptResult.EXPIRED_SESSION;
         }

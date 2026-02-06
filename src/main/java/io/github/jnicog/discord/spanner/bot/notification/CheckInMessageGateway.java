@@ -5,5 +5,4 @@ import java.util.concurrent.CompletableFuture;
 public interface CheckInMessageGateway {
     CompletableFuture<String> sendCheckInStartMessage(long channelId, String message);
     CompletableFuture<Void> attachCheckInButtons(long channelId, long messageId);
-    void updateCheckInMessage(long channelId, long messageId, String message);
 }

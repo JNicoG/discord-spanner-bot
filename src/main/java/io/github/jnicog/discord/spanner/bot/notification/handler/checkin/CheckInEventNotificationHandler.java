@@ -1,9 +1,7 @@
 package io.github.jnicog.discord.spanner.bot.notification.handler.checkin;
 
-import io.github.jnicog.discord.spanner.bot.checkin.CheckInService;
 import io.github.jnicog.discord.spanner.bot.config.QueueProperties;
 import io.github.jnicog.discord.spanner.bot.event.checkin.PlayerCheckInEvent;
-import io.github.jnicog.discord.spanner.bot.notification.CheckInMessageGateway;
 import io.github.jnicog.discord.spanner.bot.notification.handler.CommandEventNotificationHandler;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import org.apache.commons.lang3.StringUtils;
@@ -16,15 +14,12 @@ import java.util.stream.Collectors;
 public class CheckInEventNotificationHandler implements CommandEventNotificationHandler<PlayerCheckInEvent> {
 
     private final QueueProperties queueProperties;
-    private final CheckInMessageGateway checkInMessageGateway;
 
     private static final Emoji CHECKED_IN_SYMBOL = Emoji.fromUnicode("U+2714");
     private static final String NOT_CHECKED_IN_SYMBOL = "X";
 
-    public CheckInEventNotificationHandler(QueueProperties queueProperties,
-                                           CheckInMessageGateway checkInMessageGateway) {
+    public CheckInEventNotificationHandler(QueueProperties queueProperties) {
         this.queueProperties = queueProperties;
-        this.checkInMessageGateway = checkInMessageGateway;
     }
 
     @Override
@@ -52,10 +47,6 @@ public class CheckInEventNotificationHandler implements CommandEventNotification
         );
         // Deduplicate with CheckInStartedEventNotificationHandler
 
-        checkInMessageGateway.updateCheckInMessage(
-                event.getContext().channelId(),
-                event.getCheckInMessageId(),
-                message
-        );
+        event.getContext().interactionResponder().updateMessageContent(message, event.getCheckInMessageId());
     }
 }

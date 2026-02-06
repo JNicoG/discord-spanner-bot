@@ -2,10 +2,8 @@ package io.github.jnicog.discord.spanner.bot.notification;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
-import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.entities.emoji.Emoji;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CompletableFuture;
@@ -50,15 +48,15 @@ public class JdaCheckInMessageGatewayImpl implements CheckInMessageGateway {
                 .thenAccept(ignored -> {});
     }
 
-    @Override
-    public void updateCheckInMessage(long channelId, long messageId, String message) {
-        TextChannel channel = jda.getTextChannelById(channelId);
-        if (channel == null) {
-            throw new IllegalArgumentException("Channel with ID " + channelId + " not found");
-        }
-
-        channel.editMessageById(messageId, message)
-                .submit()
-                .thenAccept(ignored -> {});
-    }
+//    @Override
+//    public void updateCheckInMessage(long channelId, long messageId, String message) {
+//        TextChannel channel = jda.getTextChannelById(channelId);
+//        if (channel == null) {
+//            throw new IllegalArgumentException("Channel with ID " + channelId + " not found");
+//        }
+//
+//        channel.editMessageById(messageId, message)
+//                .submit()
+//                .thenAccept(ignored -> {});
+//    }
 }
