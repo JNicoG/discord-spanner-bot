@@ -4,6 +4,13 @@ import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * V1 JDA-coupled responder that was passed through the domain layer.
+ *
+ * @deprecated Use {@link io.github.jnicog.discord.spanner.bot.command.dispatcher.JdaResponseTranslator} instead.
+ * The V2 architecture keeps JDA coupling in the dispatcher layer using closures.
+ */
+@Deprecated
 public class JdaInteractionResponder implements InteractionResponder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JdaInteractionResponder.class);

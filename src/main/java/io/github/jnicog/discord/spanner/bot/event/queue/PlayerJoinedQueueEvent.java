@@ -5,6 +5,10 @@ import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 import java.util.Set;
 
+/**
+ * @deprecated Use {@link PlayerJoinedQueueEventV2} instead.
+ */
+@Deprecated
 public class PlayerJoinedQueueEvent extends AbstractCommandResult<CommandContext> {
 
     private final Set<Long> updatedQueueSnapshot;

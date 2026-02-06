@@ -5,6 +5,10 @@ import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 import java.util.Map;
 
+/**
+ * @deprecated Use {@link PlayerCheckInEventV2} instead.
+ */
+@Deprecated
 public class PlayerCheckInEvent extends AbstractCommandResult<InteractionContext> implements CheckInEvent {
 
     private long checkInMessageId;

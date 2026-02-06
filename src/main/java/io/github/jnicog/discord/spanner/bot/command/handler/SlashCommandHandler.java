@@ -5,6 +5,12 @@ import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 import java.util.List;
 
+/**
+ * V1 slash command handler that receives JDA-coupled context.
+ *
+ * @deprecated Use {@link SlashCommandHandlerV2} instead.
+ */
+@Deprecated
 public interface SlashCommandHandler {
     String getCommandName();
     default List<String> getAliases() {

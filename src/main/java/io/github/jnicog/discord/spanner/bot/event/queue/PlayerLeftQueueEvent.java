@@ -6,6 +6,10 @@ import io.github.jnicog.discord.spanner.bot.event.spanner.SpannerAwardingEvent;
 
 import java.util.Set;
 
+/**
+ * @deprecated Use {@link PlayerLeftQueueEventV2} instead.
+ */
+@Deprecated
 public class PlayerLeftQueueEvent extends AbstractCommandResult<CommandContext> implements SpannerAwardingEvent {
 
     private final Set<Long> updatedQueueSnapshot;

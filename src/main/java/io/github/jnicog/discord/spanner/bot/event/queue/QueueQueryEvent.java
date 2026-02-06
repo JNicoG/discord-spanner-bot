@@ -5,6 +5,10 @@ import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 import java.util.Set;
 
+/**
+ * @deprecated Use {@link QueueQueryEventV2} instead.
+ */
+@Deprecated
 public class QueueQueryEvent extends AbstractCommandResult<CommandContext> {
 
     Set<Long> currentQueueSnapshot;

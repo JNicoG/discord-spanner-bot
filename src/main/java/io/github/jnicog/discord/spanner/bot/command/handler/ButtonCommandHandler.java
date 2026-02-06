@@ -5,6 +5,12 @@ import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 import java.util.List;
 
+/**
+ * V1 button command handler that receives JDA-coupled context.
+ *
+ * @deprecated Use {@link ButtonCommandHandlerV2} instead.
+ */
+@Deprecated
 public interface ButtonCommandHandler {
     String getCommandName();
     default List<String> getAliases() {

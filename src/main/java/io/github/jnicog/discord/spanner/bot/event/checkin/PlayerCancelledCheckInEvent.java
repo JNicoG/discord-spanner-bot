@@ -5,6 +5,10 @@ import io.github.jnicog.discord.spanner.bot.command.InteractionContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 import io.github.jnicog.discord.spanner.bot.event.spanner.SpannerAwardingEvent;
 
+/**
+ * @deprecated Use {@link CheckInCancelledEventV2} instead.
+ */
+@Deprecated
 public class PlayerCancelledCheckInEvent extends AbstractCommandResult<InteractionContext> implements SpannerAwardingEvent, CheckInEvent {
 
     private final CheckInSession activeSession;

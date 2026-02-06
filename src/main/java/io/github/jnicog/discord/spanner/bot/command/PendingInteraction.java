@@ -3,14 +3,12 @@ package io.github.jnicog.discord.spanner.bot.command;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 /**
- * Holds a command result along with a callback to send the response.
- * This allows the notification layer to resolve responses without knowing about JDA.
- *
- * <p>The dispatcher creates this wrapper and the notification service calls
- * {@link #respond(InteractionResponse)} which internally delegates to the JDA translator.</p>
+ * V1 pending interaction wrapper for V1 events.
  *
  * @param <T> The type of the command result
+ * @deprecated Use {@link PendingInteractionV2} instead which works with V2 JDA-free events.
  */
+@Deprecated
 public class PendingInteraction<T extends AbstractCommandResult<?>> {
 
     private final T result;
