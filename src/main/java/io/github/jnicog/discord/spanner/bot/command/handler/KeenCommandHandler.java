@@ -14,7 +14,11 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Set;
 
-@Component
+/**
+ * @deprecated Use {@link KeenCommandHandlerV2} instead.
+ */
+@Deprecated
+// @Component - Disabled in favor of KeenCommandHandlerV2
 public class KeenCommandHandler implements SlashCommandHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KeenCommandHandler.class);

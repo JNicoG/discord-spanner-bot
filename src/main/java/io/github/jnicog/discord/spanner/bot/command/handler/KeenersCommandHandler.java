@@ -10,7 +10,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.Set;
 
-@Component
+/**
+ * @deprecated Use {@link KeenersCommandHandlerV2} instead.
+ */
+@Deprecated
+// @Component - Disabled in favor of KeenersCommandHandlerV2
 public class KeenersCommandHandler implements SlashCommandHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KeenersCommandHandler.class);

@@ -15,7 +15,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-@Component
+/**
+ * @deprecated Use {@link CheckInButtonHandlerV2} instead.
+ */
+@Deprecated
+// @Component - Disabled in favor of CheckInButtonHandlerV2
 public class CheckInButtonHandler implements ButtonCommandHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CheckInButtonHandler.class);

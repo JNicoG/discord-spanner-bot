@@ -16,7 +16,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Component
+/**
+ * @deprecated Use {@link SlashCommandDispatcherV2} instead.
+ */
+@Deprecated
+// @Component - Disabled in favor of SlashCommandDispatcherV2
 public class SlashCommandDispatcher extends ListenerAdapter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SlashCommandDispatcher.class);

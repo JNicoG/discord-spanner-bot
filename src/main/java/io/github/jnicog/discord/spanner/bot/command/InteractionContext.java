@@ -4,7 +4,7 @@ import java.time.OffsetDateTime;
 
 public interface InteractionContext {
     OffsetDateTime eventTime();
-    String commandName(); // Or componentId for buttons
+    String commandName();
     long userId();
     long channelId();
     InteractionResponder interactionResponder();

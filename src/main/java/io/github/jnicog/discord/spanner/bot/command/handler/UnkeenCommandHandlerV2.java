@@ -1,10 +1,10 @@
 package io.github.jnicog.discord.spanner.bot.command.handler;
 
 import io.github.jnicog.discord.spanner.bot.checkin.CheckInService;
-import io.github.jnicog.discord.spanner.bot.command.CommandContext;
-import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
-import io.github.jnicog.discord.spanner.bot.event.queue.PlayerLeftQueueEvent;
-import io.github.jnicog.discord.spanner.bot.event.queue.PlayerNotInQueueEvent;
+import io.github.jnicog.discord.spanner.bot.command.SlashCommandContext;
+import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResultV2;
+import io.github.jnicog.discord.spanner.bot.event.queue.PlayerLeftQueueEventV2;
+import io.github.jnicog.discord.spanner.bot.event.queue.PlayerNotInQueueEventV2;
 import io.github.jnicog.discord.spanner.bot.queue.QueueOutcome;
 import io.github.jnicog.discord.spanner.bot.queue.QueueService;
 import org.slf4j.Logger;
@@ -14,18 +14,18 @@ import org.springframework.stereotype.Component;
 import java.util.Set;
 
 /**
- * @deprecated Use {@link UnkeenCommandHandlerV2} instead.
+ * V2 handler for the /unkeen command.
+ * Uses SlashCommandContext and returns V2 events.
  */
-@Deprecated
-// @Component - Disabled in favor of UnkeenCommandHandlerV2
-public class UnkeenCommandHandler implements SlashCommandHandler {
+@Component
+public class UnkeenCommandHandlerV2 implements SlashCommandHandlerV2 {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(UnkeenCommandHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UnkeenCommandHandlerV2.class);
 
     private final QueueService queueService;
     private final CheckInService checkInService;
 
-    public UnkeenCommandHandler(QueueService queueService, CheckInService checkInService) {
+    public UnkeenCommandHandlerV2(QueueService queueService, CheckInService checkInService) {
         this.queueService = queueService;
         this.checkInService = checkInService;
     }
@@ -36,12 +36,7 @@ public class UnkeenCommandHandler implements SlashCommandHandler {
     }
 
     @Override
-    public boolean isEphemeral() {
-        return false;
-    }
-
-    @Override
-    public AbstractCommandResult<?> handleCommand(CommandContext context) {
+    public AbstractCommandResultV2<?> handleCommand(SlashCommandContext context) {
         long userId = context.userId();
         long channelId = context.channelId();
         boolean hasActiveSession = checkInService.hasActiveSession(channelId);
@@ -53,9 +48,10 @@ public class UnkeenCommandHandler implements SlashCommandHandler {
         int maxQueueSize = queueService.showMaxQueueSize(channelId);
 
         return switch (outcome) {
-            case DEQUEUED -> new PlayerLeftQueueEvent(context, queueSnapshot, maxQueueSize, hasActiveSession);
-            case NOT_IN_QUEUE -> new PlayerNotInQueueEvent(context);
+            case DEQUEUED -> new PlayerLeftQueueEventV2(context, queueSnapshot, maxQueueSize, hasActiveSession);
+            case NOT_IN_QUEUE -> new PlayerNotInQueueEventV2(context);
             default -> throw new IllegalStateException("Unexpected queue outcome: " + outcome);
         };
     }
 }
+

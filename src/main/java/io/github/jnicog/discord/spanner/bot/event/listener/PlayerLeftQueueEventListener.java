@@ -2,7 +2,7 @@ package io.github.jnicog.discord.spanner.bot.event.listener;
 
 import io.github.jnicog.discord.spanner.bot.checkin.CheckInService;
 import io.github.jnicog.discord.spanner.bot.event.checkin.PlayerCancelledCheckInEvent;
-import io.github.jnicog.discord.spanner.bot.event.queue.PlayerLeftQueueEvent;
+import io.github.jnicog.discord.spanner.bot.event.queue.PlayerLeftQueueEventV2;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
@@ -21,7 +21,7 @@ public class PlayerLeftQueueEventListener {
 
     @EventListener
     @Order(2)
-    public void onPlayerLeftQueueEvent(PlayerLeftQueueEvent event) {
+    public void onPlayerLeftQueueEvent(PlayerLeftQueueEventV2 event) {
         long userId = event.getContext().userId();
         long channelId = event.getContext().channelId();
 
@@ -29,7 +29,7 @@ public class PlayerLeftQueueEventListener {
             return;
         }
 
-
+        // TODO: Handle player leaving during active check-in session
     }
 
 }
