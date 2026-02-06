@@ -18,8 +18,6 @@ public class JdaCheckInMessageGatewayImpl implements CheckInMessageGateway {
 
     private final JDA jda;
 
-
-
     public JdaCheckInMessageGatewayImpl(JDA jda) {
         this.jda = jda;
     }

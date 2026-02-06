@@ -9,9 +9,9 @@ public record CommandContext(
         String commandName,
         long userId,
         long channelId,
-        Map<String, String> options,
-        InteractionResponder interactionResponder
-) {
+        InteractionResponder interactionResponder,
+        Map<String, String> options
+) implements InteractionContext {
     public CommandContext {
         Objects.requireNonNull(eventTime, "eventTime");
         Objects.requireNonNull(commandName, "commandName");

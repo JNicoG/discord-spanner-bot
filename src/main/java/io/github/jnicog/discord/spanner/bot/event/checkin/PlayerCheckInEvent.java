@@ -1,12 +1,16 @@
 package io.github.jnicog.discord.spanner.bot.event.checkin;
 
-import io.github.jnicog.discord.spanner.bot.command.CommandContext;
+import io.github.jnicog.discord.spanner.bot.command.ButtonContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
-public class PlayerCheckInEvent extends AbstractCommandResult {
+public class PlayerCheckInEvent extends AbstractCommandResult<ButtonContext> implements CheckInEvent {
 
-    public PlayerCheckInEvent(CommandContext commandContext) {
-        super(commandContext);
+    protected PlayerCheckInEvent(ButtonContext context) {
+        super(context);
     }
 
+    @Override
+    public long getCheckInMessageId() {
+        return 0;
+    }
 }

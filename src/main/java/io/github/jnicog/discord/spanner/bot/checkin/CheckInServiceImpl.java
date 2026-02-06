@@ -43,7 +43,7 @@ public class CheckInServiceImpl implements CheckInService {
     public void registerMessageId(long channelId, long messageId) {
         CheckInSession session = activeSessions.get(channelId);
         if (session == null) {
-            throw new IllegalStateException("No active check-in session found for channelId: " + channelId);
+            throw new IllegalStateException("Failed to register check-in message ID: No active check-in session found for channelId: " + channelId);
         }
         session.setMessageId(messageId);
     }
@@ -70,9 +70,6 @@ public class CheckInServiceImpl implements CheckInService {
         if (result == CheckInResult.SESSION_CANCELLED) {
             // atomic removal
             activeSessions.remove(channelId);
-
-            // perform repository call
-            // spannerRepository.incrementSpanner(userId, channelId);
 
             // cancel the timeout task
             // session.getTimeoutFuture().cancel();

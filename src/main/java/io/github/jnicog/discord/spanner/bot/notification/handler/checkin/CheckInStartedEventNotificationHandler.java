@@ -31,8 +31,8 @@ public class CheckInStartedEventNotificationHandler {
 
     public static final Emoji SPANNER_EMOJI = Emoji.fromUnicode("U+1F527");
 
-    public static final Button ACCEPT_BUTTON = Button.success("acceptButton", CHECK_MARK_EMOJI);
-    public static final Button SPANNER_BUTTON = Button.danger("spannerButton", SPANNER_EMOJI);
+    public static final Button ACCEPT_BUTTON = Button.success("checkInAccept", CHECK_MARK_EMOJI);
+    public static final Button SPANNER_BUTTON = Button.danger("checkInSpanner", SPANNER_EMOJI);
 
     public CheckInStartedEventNotificationHandler(QueueProperties queueProperties,
                                                   CheckInMessageGateway checkInMessageGateway,

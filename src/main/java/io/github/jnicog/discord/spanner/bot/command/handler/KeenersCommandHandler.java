@@ -32,7 +32,7 @@ public class KeenersCommandHandler implements SlashCommandHandler {
     }
 
     @Override
-    public AbstractCommandResult handleCommand(CommandContext context) {
+    public AbstractCommandResult<?> handleCommand(CommandContext context) {
         long channelId = context.channelId();
 
         Set<Long> queueSnapshot = queueService.showQueue(channelId);

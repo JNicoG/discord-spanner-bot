@@ -8,13 +8,13 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
-public class QueueCheckInTrigger {
+public class StartCheckInTrigger {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(QueueCheckInTrigger.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StartCheckInTrigger.class);
 
     private final CheckInService checkInService;
 
-    public QueueCheckInTrigger(CheckInService checkInService) {
+    public StartCheckInTrigger(CheckInService checkInService) {
         this.checkInService = checkInService;
     }
 
@@ -25,21 +25,9 @@ public class QueueCheckInTrigger {
 
         if (justFilledQueue) {
             LOGGER.info("Queue for channel {} filled. Triggering check-in event.", event.getContext().channelId());
-
-            // Perhaps we publish a StartCheckInEvent instead of directly calling service
-            // since notification service also needs to know when check-in starts.
             checkInService.startCheckIn(event.getContext().channelId(), event.getUpdatedQueueSnapshot());
         }
 
     }
-
-    /**
-     * Queue check-in sequence:
-     * 1. Player issues /keen command and is added to queue.
-     * 2. If queue reaches max capacity, start check-in session.
-     * 3. A notification is sent to the channel announcing the start of check-in session.
-     * 4. Await successful publish of message to channel before starting check-in timer.
-     * 5. Await successful publish of message before editing message with buttons for checking in and cancelling.
-     */
 
 }

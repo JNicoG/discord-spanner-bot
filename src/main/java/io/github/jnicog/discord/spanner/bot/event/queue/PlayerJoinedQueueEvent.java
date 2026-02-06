@@ -5,7 +5,7 @@ import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 import java.util.Set;
 
-public class PlayerJoinedQueueEvent extends AbstractCommandResult {
+public class PlayerJoinedQueueEvent extends AbstractCommandResult<CommandContext> {
 
     private final Set<Long> updatedQueueSnapshot;
     private final int maxQueueSize;

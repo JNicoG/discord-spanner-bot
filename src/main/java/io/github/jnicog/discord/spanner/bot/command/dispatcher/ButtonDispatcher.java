@@ -1,11 +1,11 @@
 package io.github.jnicog.discord.spanner.bot.command.dispatcher;
 
-import io.github.jnicog.discord.spanner.bot.command.CommandContext;
+import io.github.jnicog.discord.spanner.bot.command.ButtonContext;
 import io.github.jnicog.discord.spanner.bot.command.InteractionResponder;
 import io.github.jnicog.discord.spanner.bot.command.JdaInteractionResponder;
-import io.github.jnicog.discord.spanner.bot.command.handler.SlashCommandHandler;
+import io.github.jnicog.discord.spanner.bot.command.handler.ButtonCommandHandler;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,14 +17,14 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class SlashCommandDispatcher extends ListenerAdapter {
+public class ButtonDispatcher extends ListenerAdapter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SlashCommandDispatcher.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ButtonDispatcher.class);
 
     private final ApplicationEventPublisher eventPublisher;
-    private final Map<String, SlashCommandHandler> handlers = new HashMap<>();
+    private final Map<String, ButtonCommandHandler> handlers = new HashMap<>();
 
-    public SlashCommandDispatcher(ApplicationEventPublisher eventPublisher, List<SlashCommandHandler> handlerList) {
+    public ButtonDispatcher(ApplicationEventPublisher eventPublisher, List<ButtonCommandHandler> handlerList) {
         this.eventPublisher = eventPublisher;
         handlerList.forEach(handler -> {
             this.handlers.put(handler.getCommandName(), handler);
@@ -33,14 +33,15 @@ public class SlashCommandDispatcher extends ListenerAdapter {
     }
 
     @Override
-    public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        LOGGER.debug("Received slash command: {} by {} at {}",
-                event.getName(), event.getUser().getAsTag(), event.getChannelId());
+    public void onButtonInteraction(ButtonInteractionEvent event) {
 
-        SlashCommandHandler handler = handlers.get(event.getName());
+        LOGGER.debug("Received button interaction: {} by {} at {}",
+                event.getComponentId(), event.getUser().getAsTag(), event.getChannelId());
+
+        ButtonCommandHandler handler = handlers.get(event.getComponentId());
         if (handler == null) {
-            LOGGER.error("No handler found for command: {}", event.getName());
-            event.reply("Unknown command: " + event.getName()).setEphemeral(true).queue();
+            LOGGER.error("No handler found for button: {}", event.getButton().getLabel());
+            event.reply("Unknown button: " + event.getButton().getLabel()).setEphemeral(true).queue();
             return;
         }
 
@@ -50,17 +51,14 @@ public class SlashCommandDispatcher extends ListenerAdapter {
 
             // Unpack and map to domain context
             InteractionResponder interactionResponder = new JdaInteractionResponder(event);
-            Map<String, String> options = event.getOptions().stream()
-                    .collect(HashMap::new, (map, option)
-                            -> map.put(option.getName(), option.getAsString()), HashMap::putAll);
 
-            CommandContext context = new CommandContext(
+            ButtonContext context = new ButtonContext(
                     event.getTimeCreated(),
                     handler.getCommandName(),
                     event.getUser().getIdLong(),
                     event.getChannelIdLong(),
                     interactionResponder,
-                    options
+                    event.getMessageIdLong()
             );
 
             AbstractCommandResult<?> commandResult = handler.handleCommand(context);
@@ -69,7 +67,7 @@ public class SlashCommandDispatcher extends ListenerAdapter {
             eventPublisher.publishEvent(commandResult);
 
         } catch (Exception e) {
-            LOGGER.error("Error handling command: {}", event.getName(), e);
+            LOGGER.error("Error handling button: {}", event.getButton().getLabel(), e);
             event.reply("An error occurred while processing your command. Please try again later.")
                     .setEphemeral(true).queue();
         }

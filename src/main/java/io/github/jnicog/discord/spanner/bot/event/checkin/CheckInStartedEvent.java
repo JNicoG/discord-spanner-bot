@@ -2,9 +2,9 @@ package io.github.jnicog.discord.spanner.bot.event.checkin;
 
 import io.github.jnicog.discord.spanner.bot.checkin.CheckInSession;
 
-public class CheckInStartedEvent {
+public class CheckInStartedEvent implements CheckInEvent {
 
-    private CheckInSession session;
+    private final CheckInSession session;
 
     public CheckInStartedEvent(CheckInSession session) {
         this.session = session;
@@ -14,4 +14,8 @@ public class CheckInStartedEvent {
         return session;
     }
 
+    @Override
+    public long getCheckInMessageId() {
+        return session.getMessageId();
+    }
 }

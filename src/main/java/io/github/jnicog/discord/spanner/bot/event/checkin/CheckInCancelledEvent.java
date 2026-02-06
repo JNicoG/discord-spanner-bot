@@ -5,6 +5,6 @@ package io.github.jnicog.discord.spanner.bot.event.checkin;
  * This event differs from PlayerCancelledCheckInEvent, where it represents a cancellation of the session
  * by the system/admin rather than by an individual.
  */
-public class CheckInSessionCancelledEvent {
+public class CheckInCancelledEvent {
 
 }

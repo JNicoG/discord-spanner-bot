@@ -6,17 +6,20 @@ import io.github.jnicog.discord.spanner.bot.event.spanner.SpannerAwardingEvent;
 
 import java.util.Set;
 
-public class PlayerLeftQueueEvent extends AbstractCommandResult implements SpannerAwardingEvent {
+public class PlayerLeftQueueEvent extends AbstractCommandResult<CommandContext> implements SpannerAwardingEvent {
 
     private final Set<Long> updatedQueueSnapshot;
     private final int maxQueueSize;
+    private final boolean isCheckInSessionActive;
 
     public PlayerLeftQueueEvent(CommandContext commandContext,
                                 Set<Long> updatedQueue,
-                                int maxQueueSize) {
+                                int maxQueueSize,
+                                boolean isCheckInSessionActive) {
         super(commandContext);
         this.updatedQueueSnapshot = Set.copyOf(updatedQueue);
         this.maxQueueSize = maxQueueSize;
+        this.isCheckInSessionActive = isCheckInSessionActive;
     }
 
     public Set<Long> getUpdatedQueueSnapshot() {
@@ -29,11 +32,11 @@ public class PlayerLeftQueueEvent extends AbstractCommandResult implements Spann
 
     @Override
     public long getTargetUserId() {
-        return context.userId();
+        return getContext().userId();
     }
 
     @Override
     public long getTargetChannelId() {
-        return context.channelId();
+        return getContext().channelId();
     }
 }

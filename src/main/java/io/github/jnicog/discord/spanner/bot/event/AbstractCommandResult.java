@@ -1,16 +1,16 @@
 package io.github.jnicog.discord.spanner.bot.event;
 
-import io.github.jnicog.discord.spanner.bot.command.CommandContext;
+import io.github.jnicog.discord.spanner.bot.command.InteractionContext;
 
-public abstract class AbstractCommandResult {
+public abstract class AbstractCommandResult<T extends InteractionContext> {
 
-    public CommandContext context;
+    private final T context;
 
-    protected AbstractCommandResult(CommandContext commandContext) {
-        this.context = commandContext;
+    protected AbstractCommandResult(T context) {
+        this.context = context;
     }
 
-    public CommandContext getContext() {
+    public T getContext() {
         return context;
     }
 }

@@ -1,5 +1,6 @@
 package io.github.jnicog.discord.spanner.bot.command.handler;
 
+import io.github.jnicog.discord.spanner.bot.checkin.CheckInService;
 import io.github.jnicog.discord.spanner.bot.command.CommandContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 import io.github.jnicog.discord.spanner.bot.event.queue.PlayerLeftQueueEvent;
@@ -18,9 +19,11 @@ public class UnkeenCommandHandler implements SlashCommandHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(UnkeenCommandHandler.class);
 
     private final QueueService queueService;
+    private final CheckInService checkInService;
 
-    public UnkeenCommandHandler(QueueService queueService) {
+    public UnkeenCommandHandler(QueueService queueService, CheckInService checkInService) {
         this.queueService = queueService;
+        this.checkInService = checkInService;
     }
 
     @Override
@@ -34,9 +37,10 @@ public class UnkeenCommandHandler implements SlashCommandHandler {
     }
 
     @Override
-    public AbstractCommandResult handleCommand(CommandContext context) {
+    public AbstractCommandResult<?> handleCommand(CommandContext context) {
         long userId = context.userId();
         long channelId = context.channelId();
+        boolean hasActiveSession = checkInService.hasActiveSession(channelId);
 
         // These two should be joined into one atomic operation
         QueueOutcome outcome = queueService.leaveQueue(userId, channelId);
@@ -44,10 +48,8 @@ public class UnkeenCommandHandler implements SlashCommandHandler {
 
         int maxQueueSize = queueService.showMaxQueueSize(channelId);
 
-        // TODO: Must also handle case where user tries to issue /unkeen during an active check-in session.
-
         return switch (outcome) {
-            case DEQUEUED -> new PlayerLeftQueueEvent(context, queueSnapshot, maxQueueSize);
+            case DEQUEUED -> new PlayerLeftQueueEvent(context, queueSnapshot, maxQueueSize, hasActiveSession);
             case NOT_IN_QUEUE -> new PlayerNotInQueueEvent(context);
             default -> throw new IllegalStateException("Unexpected queue outcome: " + outcome);
         };
