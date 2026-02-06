@@ -15,7 +15,7 @@ public class QueueProperties {
     /**
      * Maximum number of players allowed in a queue.
      */
-    private int maxQueueSize = 1;
+    private int maxQueueSize = 5;
 
     /**
      * Number of units to define how long a player can stay in the queue before being automatically removed.

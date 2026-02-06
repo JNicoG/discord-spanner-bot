@@ -12,4 +12,9 @@ public interface QueueService {
 
     int showMaxQueueSize(long textChannelId);
 
+    /**
+     * Clears all users from the queue for the given channel.
+     * @param textChannelId The channel ID
+     */
+    void clearQueue(long textChannelId);
 }

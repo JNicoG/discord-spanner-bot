@@ -4,11 +4,13 @@ import io.github.jnicog.discord.spanner.bot.checkin.CheckInAttemptResult;
 import io.github.jnicog.discord.spanner.bot.checkin.CheckInService;
 import io.github.jnicog.discord.spanner.bot.command.ButtonInteractionContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResultV2;
+import io.github.jnicog.discord.spanner.bot.event.checkin.CheckInCompletedEventV2;
 import io.github.jnicog.discord.spanner.bot.event.checkin.ExpiredSessionCheckInEventV2;
 import io.github.jnicog.discord.spanner.bot.event.checkin.NoActiveSessionEventV2;
 import io.github.jnicog.discord.spanner.bot.event.checkin.PlayerAlreadyCheckedInEventV2;
 import io.github.jnicog.discord.spanner.bot.event.checkin.PlayerCheckInEventV2;
 import io.github.jnicog.discord.spanner.bot.event.checkin.UnauthorisedCheckInEventV2;
+import io.github.jnicog.discord.spanner.bot.queue.QueueService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -25,9 +27,11 @@ public class CheckInButtonHandlerV2 implements ButtonCommandHandlerV2 {
     private static final Logger LOGGER = LoggerFactory.getLogger(CheckInButtonHandlerV2.class);
 
     private final CheckInService checkInService;
+    private final QueueService queueService;
 
-    public CheckInButtonHandlerV2(CheckInService checkInService) {
+    public CheckInButtonHandlerV2(CheckInService checkInService, QueueService queueService) {
         this.checkInService = checkInService;
+        this.queueService = queueService;
     }
 
     @Override
@@ -41,6 +45,12 @@ public class CheckInButtonHandlerV2 implements ButtonCommandHandlerV2 {
         long channelId = context.channelId();
         long buttonMessageId = context.messageId();
 
+        // Get the snapshot BEFORE check-in (in case session completes and is removed)
+        Map<Long, Boolean> preCheckInSnapshot = null;
+        if (checkInService.hasActiveSession(channelId)) {
+            preCheckInSnapshot = checkInService.getUpdatedCheckInSnapshot(channelId);
+        }
+
         CheckInAttemptResult checkInResult = checkInService.userCheckIn(channelId, userId, buttonMessageId);
 
         return switch (checkInResult) {
@@ -48,12 +58,30 @@ public class CheckInButtonHandlerV2 implements ButtonCommandHandlerV2 {
                 Map<Long, Boolean> updatedCheckInSnapshot = checkInService.getUpdatedCheckInSnapshot(channelId);
                 yield new PlayerCheckInEventV2(context, updatedCheckInSnapshot, buttonMessageId);
             }
+            case SESSION_COMPLETED -> {
+                // All users have checked in - session is now removed
+                // Clear the queue so users can /keen again
+                queueService.clearQueue(channelId);
+                LOGGER.info("Queue cleared for channel {} after successful check-in completion", channelId);
+
+                // Use the pre-check-in snapshot and update the last user's status
+                Map<Long, Boolean> finalSnapshot = preCheckInSnapshot != null
+                    ? updateSnapshot(preCheckInSnapshot, userId)
+                    : Map.of(userId, true);
+                yield new CheckInCompletedEventV2(context, finalSnapshot, buttonMessageId);
+            }
             case ALREADY_CHECKED_IN -> new PlayerAlreadyCheckedInEventV2(context);
             case UNAUTHORISED -> new UnauthorisedCheckInEventV2(context);
             case NO_ACTIVE_SESSION -> new NoActiveSessionEventV2(context);
             case EXPIRED_SESSION -> new ExpiredSessionCheckInEventV2(context);
             default -> throw new IllegalStateException("Unexpected check-in result: " + checkInResult);
         };
+    }
+
+    private Map<Long, Boolean> updateSnapshot(Map<Long, Boolean> original, long userId) {
+        var mutable = new java.util.HashMap<>(original);
+        mutable.put(userId, true);
+        return Map.copyOf(mutable);
     }
 }
 

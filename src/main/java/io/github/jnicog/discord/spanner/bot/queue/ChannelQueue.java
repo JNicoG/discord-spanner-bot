@@ -71,6 +71,15 @@ public class ChannelQueue {
         }
     }
 
+    public void clear() {
+        lock.lock();
+        try {
+            currentQueue.clear();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     int getMaxQueueSize() {
         return maxSize;
     }

@@ -20,8 +20,10 @@ public class QueueQueryResponseResolverV2 implements ResponseResolverV2<QueueQue
                 .collect(Collectors.joining(", "));
 
         String message = String.format(
-                "Current queue: %s",
-                event.getCurrentQueueSnapshot().isEmpty() ? "No players in queue" : currentQueue
+                "Current queue: %s [%d/%d]",
+                event.getCurrentQueueSnapshot().isEmpty() ? "No players in queue" : currentQueue,
+                event.getCurrentQueueSnapshot().size(),
+                event.getMaxQueueSize()
         );
 
         return new InteractionResponse.PublicReply(message);

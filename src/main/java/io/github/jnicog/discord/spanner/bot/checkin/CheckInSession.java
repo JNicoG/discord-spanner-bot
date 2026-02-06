@@ -40,6 +40,13 @@ public class CheckInSession {
 
             if (!status) {
                 userCheckInStatusMap.replace(userId, true);
+
+                // Check if all users have now checked in
+                boolean allCheckedIn = userCheckInStatusMap.values().stream().allMatch(Boolean::booleanValue);
+                if (allCheckedIn) {
+                    return CheckInAttemptResult.SESSION_COMPLETED;
+                }
+
                 return CheckInAttemptResult.CHECKED_IN;
             }
 

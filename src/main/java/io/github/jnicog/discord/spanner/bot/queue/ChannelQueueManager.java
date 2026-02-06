@@ -45,6 +45,12 @@ public class ChannelQueueManager implements QueueService {
         return channelQueue.getMaxQueueSize();
     }
 
+    @Override
+    public void clearQueue(long textChannelId) {
+        ChannelQueue channelQueue = getOrCreateChannelQueue(textChannelId);
+        channelQueue.clear();
+    }
+
     private ChannelQueue getOrCreateChannelQueue(long textChannelId) {
         return channelQueues.computeIfAbsent(textChannelId, _ -> new ChannelQueue(queueProperties.getMaxQueueSize()));
     }

@@ -67,7 +67,15 @@ public class CheckInServiceImpl implements CheckInService {
             return CheckInAttemptResult.EXPIRED_SESSION;
         }
 
-        return session.checkInUser(userId);
+        CheckInAttemptResult result = session.checkInUser(userId);
+
+        // If all users have checked in, remove the session
+        if (result == CheckInAttemptResult.SESSION_COMPLETED) {
+            LOGGER.info("All users have checked in for channel {}. Session completed.", channelId);
+            activeSessions.remove(channelId);
+        }
+
+        return result;
     }
 
     @Override
