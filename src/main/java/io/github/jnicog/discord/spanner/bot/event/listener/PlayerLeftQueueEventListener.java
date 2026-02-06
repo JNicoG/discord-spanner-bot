@@ -1,14 +1,20 @@
 package io.github.jnicog.discord.spanner.bot.event.listener;
 
 import io.github.jnicog.discord.spanner.bot.checkin.CheckInService;
-import io.github.jnicog.discord.spanner.bot.event.checkin.PlayerCancelledCheckInEvent;
 import io.github.jnicog.discord.spanner.bot.event.queue.PlayerLeftQueueEventV2;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-@Component
+/**
+ * @deprecated This listener was intended to handle players leaving the queue during an active
+ * check-in session. This functionality is now handled by
+ * {@link io.github.jnicog.discord.spanner.bot.command.handler.UnkeenCommandHandlerV2#tryHandleCheckInCancellation}
+ * which cancels the session when a participant uses /unkeen during check-in.
+ */
+@Deprecated
+// @Component - Disabled, superseded by UnkeenCommandHandlerV2
 public class PlayerLeftQueueEventListener {
 
     private final ApplicationEventPublisher eventPublisher;
@@ -29,7 +35,7 @@ public class PlayerLeftQueueEventListener {
             return;
         }
 
-        // TODO: Handle player leaving during active check-in session
+
     }
 
 }

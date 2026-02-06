@@ -158,13 +158,4 @@ public class CheckInServiceImpl implements CheckInService {
 
         return new CancelResult(result, Set.of(), messageId);
     }
-
-    @Override
-    public long getSessionMessageId(long channelId) {
-        CheckInSession session = activeSessions.get(channelId);
-        if (session == null) {
-            return -1;
-        }
-        return session.getMessageId();
-    }
 }

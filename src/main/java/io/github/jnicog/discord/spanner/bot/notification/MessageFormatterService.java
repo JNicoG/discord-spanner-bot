@@ -9,8 +9,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Centralized service for formatting Discord messages.
- * Extracts message formatting logic from response resolvers for reusability and testability.
+ * Centralised service for formatting Discord messages.
+ * Extracts message formatting logic from response resolvers
  */
 @Service
 public class MessageFormatterService {

@@ -30,12 +30,5 @@ public interface CheckInSessionReader {
      * @return Set of user IDs in the session, or empty set if no active session
      */
     Set<Long> getSessionParticipants(long channelId);
-
-    /**
-     * Gets the message ID for the active check-in session.
-     * @param channelId The channel ID
-     * @return The message ID, or -1 if no active session
-     */
-    long getSessionMessageId(long channelId);
 }
 
