@@ -8,6 +8,7 @@ public sealed interface InteractionResponse permits
         InteractionResponse.PublicReply,
         InteractionResponse.EditMessage,
         InteractionResponse.UpdateOriginalMessage,
+        InteractionResponse.UpdateOriginalMessageAndClearComponents,
         InteractionResponse.DeferReply,
         InteractionResponse.NoReply {
 
@@ -16,6 +17,8 @@ public sealed interface InteractionResponse permits
     record EditMessage(long messageId, String content) implements InteractionResponse {}
     /** For button interactions - acknowledges the interaction and updates the message the button is on */
     record UpdateOriginalMessage(String content) implements InteractionResponse {}
+    /** For button interactions - acknowledges, updates message content, and removes all buttons/components */
+    record UpdateOriginalMessageAndClearComponents(String content) implements InteractionResponse {}
     record DeferReply(boolean ephemeral) implements InteractionResponse {}
     record NoReply() implements InteractionResponse {}
 }

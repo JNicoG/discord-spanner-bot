@@ -52,6 +52,21 @@ public class JdaResponseTranslator {
                 }
             }
 
+            case InteractionResponse.UpdateOriginalMessageAndClearComponents(String content) -> {
+                if (interaction instanceof IMessageEditCallback editCallback) {
+                    // For button interactions - acknowledge, update message, and remove all components
+                    editCallback.editMessage(content)
+                        .setComponents()  // Empty components list removes all buttons
+                        .queue(
+                            __ -> {},
+                            error -> LOGGER.error("Failed to update original message and clear components: {}", error.getMessage())
+                        );
+                } else {
+                    LOGGER.error("UpdateOriginalMessageAndClearComponents used on non-button interaction");
+                    interaction.reply("An error occurred.").setEphemeral(true).queue();
+                }
+            }
+
             case InteractionResponse.DeferReply(boolean ephemeral) ->
                 interaction.deferReply(ephemeral).queue(
                     __ -> {},

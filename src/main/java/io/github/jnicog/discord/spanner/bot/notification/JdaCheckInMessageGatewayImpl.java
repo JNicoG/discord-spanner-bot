@@ -48,15 +48,18 @@ public class JdaCheckInMessageGatewayImpl implements CheckInMessageGateway {
                 .thenAccept(ignored -> {});
     }
 
-//    @Override
-//    public void updateCheckInMessage(long channelId, long messageId, String message) {
-//        TextChannel channel = jda.getTextChannelById(channelId);
-//        if (channel == null) {
-//            throw new IllegalArgumentException("Channel with ID " + channelId + " not found");
-//        }
-//
-//        channel.editMessageById(messageId, message)
-//                .submit()
-//                .thenAccept(ignored -> {});
-//    }
+    @Override
+    public CompletableFuture<Void> updateCheckInMessageAndClearButtons(long channelId, long messageId, String message) {
+        TextChannel channel = jda.getTextChannelById(channelId);
+        if (channel == null) {
+            return CompletableFuture.failedFuture(
+                    new IllegalArgumentException("Channel with ID " + channelId + " not found")
+            );
+        }
+
+        return channel.editMessageById(messageId, message)
+                .setComponents()  // Empty components list removes all buttons
+                .submit()
+                .thenAccept(ignored -> {});
+    }
 }

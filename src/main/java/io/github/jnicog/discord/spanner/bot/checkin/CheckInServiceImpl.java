@@ -113,4 +113,50 @@ public class CheckInServiceImpl implements CheckInService {
         }
         return session.getUserCheckInStatusSnapshot();
     }
+
+    @Override
+    public Set<Long> getSessionParticipants(long channelId) {
+        CheckInSession session = activeSessions.get(channelId);
+        if (session == null) {
+            return Set.of();
+        }
+        return session.getUserCheckInStatusSnapshot().keySet();
+    }
+
+    @Override
+    public CancelResult cancelAndGetRemainingUsers(long channelId, long cancellingUserId) {
+        CheckInSession session = activeSessions.get(channelId);
+        if (session == null) {
+            return CancelResult.noActiveSession();
+        }
+
+        // Get the message ID before cancelling
+        long messageId = session.getMessageId();
+
+        // Get all participants except the cancelling user
+        Set<Long> allParticipants = session.getUserCheckInStatusSnapshot().keySet();
+        Set<Long> remainingUsers = allParticipants.stream()
+                .filter(userId -> userId != cancellingUserId)
+                .collect(java.util.stream.Collectors.toSet());
+
+        CheckInAttemptResult result = session.cancelCheckIn(cancellingUserId);
+
+        if (result == CheckInAttemptResult.SESSION_CANCELLED) {
+            activeSessions.remove(channelId);
+            return CancelResult.cancelled(remainingUsers, messageId);
+        } else if (result == CheckInAttemptResult.UNAUTHORISED) {
+            return CancelResult.unauthorised();
+        }
+
+        return new CancelResult(result, Set.of(), messageId);
+    }
+
+    @Override
+    public long getSessionMessageId(long channelId) {
+        CheckInSession session = activeSessions.get(channelId);
+        if (session == null) {
+            return -1;
+        }
+        return session.getMessageId();
+    }
 }

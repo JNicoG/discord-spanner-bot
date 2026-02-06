@@ -12,4 +12,26 @@ public interface CheckInService {
     CheckInAttemptResult timeoutSession(long channelId);
     boolean hasActiveSession(long channelId);
     Map<Long, Boolean> getUpdatedCheckInSnapshot(long channelId);
+
+    /**
+     * Gets all participants of the active session for the given channel.
+     * @param channelId The channel ID
+     * @return Set of user IDs in the session, or empty set if no active session
+     */
+    Set<Long> getSessionParticipants(long channelId);
+
+    /**
+     * Cancels the check-in session and returns the remaining users (excluding the cancelling user).
+     * @param channelId The channel ID
+     * @param cancellingUserId The user ID of the person cancelling
+     * @return CancelResult containing the result and remaining users
+     */
+    CancelResult cancelAndGetRemainingUsers(long channelId, long cancellingUserId);
+
+    /**
+     * Gets the message ID for the active check-in session.
+     * @param channelId The channel ID
+     * @return The message ID, or -1 if no active session
+     */
+    long getSessionMessageId(long channelId);
 }
