@@ -1,6 +1,6 @@
 package io.github.jnicog.discord.spanner.bot.event.listener;
 
-import io.github.jnicog.discord.spanner.bot.event.checkin.UnkeenDuringCheckInEventV2;
+import io.github.jnicog.discord.spanner.bot.event.checkin.UnkeenDuringCheckInEvent;
 import io.github.jnicog.discord.spanner.bot.notification.CheckInMessageGateway;
 import io.github.jnicog.discord.spanner.bot.notification.MessageFormatterService;
 import org.slf4j.Logger;
@@ -28,7 +28,7 @@ public class UnkeenDuringCheckInEventListener {
 
     @EventListener
     @Order(2)
-    public void onUnkeenDuringCheckIn(UnkeenDuringCheckInEventV2 event) {
+    public void onUnkeenDuringCheckIn(UnkeenDuringCheckInEvent event) {
         long channelId = event.getContext().channelId();
         long messageId = event.getCheckInMessageId();
 

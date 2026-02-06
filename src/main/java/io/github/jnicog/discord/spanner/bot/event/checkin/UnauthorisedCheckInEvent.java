@@ -1,17 +1,15 @@
 package io.github.jnicog.discord.spanner.bot.event.checkin;
 
-import io.github.jnicog.discord.spanner.bot.command.ButtonContext;
-import io.github.jnicog.discord.spanner.bot.command.InteractionContext;
+import io.github.jnicog.discord.spanner.bot.command.ButtonInteractionContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 /**
- * @deprecated Use {@link UnauthorisedCheckInEventV2} instead.
+ *  event for when a player tries to check in without authorisation.
  */
-@Deprecated
-public class UnauthorisedCheckInEvent extends AbstractCommandResult<InteractionContext> {
+public class UnauthorisedCheckInEvent extends AbstractCommandResult<ButtonInteractionContext> {
 
-    public UnauthorisedCheckInEvent(InteractionContext commandContext) {
-        super(commandContext);
+    public UnauthorisedCheckInEvent(ButtonInteractionContext context) {
+        super(context);
     }
-
 }
+

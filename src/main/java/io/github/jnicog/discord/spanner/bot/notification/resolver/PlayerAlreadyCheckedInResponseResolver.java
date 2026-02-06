@@ -1,25 +1,25 @@
 package io.github.jnicog.discord.spanner.bot.notification.resolver;
 
 import io.github.jnicog.discord.spanner.bot.command.InteractionResponse;
-import io.github.jnicog.discord.spanner.bot.command.ResponseResolverV2;
-import io.github.jnicog.discord.spanner.bot.event.checkin.PlayerAlreadyCheckedInEventV2;
+import io.github.jnicog.discord.spanner.bot.command.ResponseResolver;
+import io.github.jnicog.discord.spanner.bot.event.checkin.PlayerAlreadyCheckedInEvent;
 import io.github.jnicog.discord.spanner.bot.notification.MessageFormatterService;
 import org.springframework.stereotype.Component;
 
 /**
- * V2 ResponseResolver for PlayerAlreadyCheckedInEventV2.
+ *  ResponseResolver for PlayerAlreadyCheckedInEvent.
  */
 @Component
-public class PlayerAlreadyCheckedInResponseResolverV2 implements ResponseResolverV2<PlayerAlreadyCheckedInEventV2> {
+public class PlayerAlreadyCheckedInResponseResolver implements ResponseResolver<PlayerAlreadyCheckedInEvent> {
 
     private final MessageFormatterService messageFormatter;
 
-    public PlayerAlreadyCheckedInResponseResolverV2(MessageFormatterService messageFormatter) {
+    public PlayerAlreadyCheckedInResponseResolver(MessageFormatterService messageFormatter) {
         this.messageFormatter = messageFormatter;
     }
 
     @Override
-    public InteractionResponse resolve(PlayerAlreadyCheckedInEventV2 event) {
+    public InteractionResponse resolve(PlayerAlreadyCheckedInEvent event) {
         return new InteractionResponse.EphemeralReply(messageFormatter.formatAlreadyCheckedIn());
     }
 }

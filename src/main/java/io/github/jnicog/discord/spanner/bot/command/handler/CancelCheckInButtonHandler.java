@@ -3,29 +3,29 @@ package io.github.jnicog.discord.spanner.bot.command.handler;
 import io.github.jnicog.discord.spanner.bot.checkin.CancelResult;
 import io.github.jnicog.discord.spanner.bot.checkin.CheckInService;
 import io.github.jnicog.discord.spanner.bot.command.ButtonInteractionContext;
-import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResultV2;
-import io.github.jnicog.discord.spanner.bot.event.checkin.CheckInCancelledEventV2;
-import io.github.jnicog.discord.spanner.bot.event.checkin.NoActiveSessionEventV2;
-import io.github.jnicog.discord.spanner.bot.event.checkin.UnauthorisedCheckInEventV2;
+import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
+import io.github.jnicog.discord.spanner.bot.event.checkin.CheckInCancelledEvent;
+import io.github.jnicog.discord.spanner.bot.event.checkin.NoActiveSessionEvent;
+import io.github.jnicog.discord.spanner.bot.event.checkin.UnauthorisedCheckInEvent;
 import io.github.jnicog.discord.spanner.bot.queue.QueueService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * V2 handler for the check-in cancel/spanner button.
+ *  handler for the check-in cancel/spanner button.
  * Cancels the check-in session. The cancelling user is removed from the queue,
  * while remaining users stay in the queue.
  */
 @Component
-public class CancelCheckInButtonHandlerV2 implements ButtonCommandHandlerV2 {
+public class CancelCheckInButtonHandler implements ButtonCommandHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CancelCheckInButtonHandlerV2.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CancelCheckInButtonHandler.class);
 
     private final CheckInService checkInService;
     private final QueueService queueService;
 
-    public CancelCheckInButtonHandlerV2(CheckInService checkInService, QueueService queueService) {
+    public CancelCheckInButtonHandler(CheckInService checkInService, QueueService queueService) {
         this.checkInService = checkInService;
         this.queueService = queueService;
     }
@@ -36,7 +36,7 @@ public class CancelCheckInButtonHandlerV2 implements ButtonCommandHandlerV2 {
     }
 
     @Override
-    public AbstractCommandResultV2<?> handleCommand(ButtonInteractionContext context) {
+    public AbstractCommandResult<?> handleCommand(ButtonInteractionContext context) {
         long userId = context.userId();
         long channelId = context.channelId();
         long buttonMessageId = context.messageId();
@@ -57,15 +57,15 @@ public class CancelCheckInButtonHandlerV2 implements ButtonCommandHandlerV2 {
                 var queueSnapshot = queueService.showQueue(channelId);
                 int maxQueueSize = queueService.showMaxQueueSize(channelId);
 
-                yield new CheckInCancelledEventV2(
+                yield new CheckInCancelledEvent(
                         context,
                         buttonMessageId,
                         queueSnapshot,
                         maxQueueSize
                 );
             }
-            case UNAUTHORISED -> new UnauthorisedCheckInEventV2(context);
-            case NO_ACTIVE_SESSION -> new NoActiveSessionEventV2(context);
+            case UNAUTHORISED -> new UnauthorisedCheckInEvent(context);
+            case NO_ACTIVE_SESSION -> new NoActiveSessionEvent(context);
             default -> throw new IllegalStateException("Unexpected cancel result: " + cancelResult.result());
         };
     }

@@ -1,23 +1,20 @@
 package io.github.jnicog.discord.spanner.bot.command.handler;
 
-import io.github.jnicog.discord.spanner.bot.command.CommandContext;
+import io.github.jnicog.discord.spanner.bot.command.SlashCommandContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 import io.github.jnicog.discord.spanner.bot.event.queue.QueueQueryEvent;
 import io.github.jnicog.discord.spanner.bot.queue.QueueService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
 
 /**
- * @deprecated Use {@link KeenersCommandHandlerV2} instead.
+ *  handler for the /keeners command.
+ * Uses SlashCommandContext and returns  events.
  */
-@Deprecated
-// @Component - Disabled in favor of KeenersCommandHandlerV2
+@Component
 public class KeenersCommandHandler implements SlashCommandHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(KeenersCommandHandler.class);
 
     private final QueueService queueService;
 
@@ -31,12 +28,7 @@ public class KeenersCommandHandler implements SlashCommandHandler {
     }
 
     @Override
-    public boolean isEphemeral() {
-        return false;
-    }
-
-    @Override
-    public AbstractCommandResult<?> handleCommand(CommandContext context) {
+    public AbstractCommandResult<?> handleCommand(SlashCommandContext context) {
         long channelId = context.channelId();
 
         Set<Long> queueSnapshot = queueService.showQueue(channelId);
@@ -45,3 +37,4 @@ public class KeenersCommandHandler implements SlashCommandHandler {
         return new QueueQueryEvent(context, queueSnapshot, maxQueueSize);
     }
 }
+

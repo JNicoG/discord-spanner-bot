@@ -1,16 +1,15 @@
 package io.github.jnicog.discord.spanner.bot.event.queue;
 
-import io.github.jnicog.discord.spanner.bot.command.CommandContext;
+import io.github.jnicog.discord.spanner.bot.command.SlashCommandContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 /**
- * @deprecated Use {@link PlayerAlreadyQueuedEventV2} instead.
+ *  event for when a player is already in the queue.
  */
-@Deprecated
-public class PlayerAlreadyQueuedEvent extends AbstractCommandResult<CommandContext> {
+public class PlayerAlreadyQueuedEvent extends AbstractCommandResult<SlashCommandContext> {
 
-    public PlayerAlreadyQueuedEvent(CommandContext commandContext) {
-        super(commandContext);
+    public PlayerAlreadyQueuedEvent(SlashCommandContext context) {
+        super(context);
     }
-
 }
+

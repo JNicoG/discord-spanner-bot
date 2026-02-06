@@ -1,25 +1,25 @@
 package io.github.jnicog.discord.spanner.bot.notification.resolver;
 
 import io.github.jnicog.discord.spanner.bot.command.InteractionResponse;
-import io.github.jnicog.discord.spanner.bot.command.ResponseResolverV2;
-import io.github.jnicog.discord.spanner.bot.event.queue.QueueQueryEventV2;
+import io.github.jnicog.discord.spanner.bot.command.ResponseResolver;
+import io.github.jnicog.discord.spanner.bot.event.queue.QueueQueryEvent;
 import io.github.jnicog.discord.spanner.bot.notification.MessageFormatterService;
 import org.springframework.stereotype.Component;
 
 /**
- * V2 ResponseResolver for QueueQueryEventV2.
+ *  ResponseResolver for QueueQueryEvent.
  */
 @Component
-public class QueueQueryResponseResolverV2 implements ResponseResolverV2<QueueQueryEventV2> {
+public class QueueQueryResponseResolver implements ResponseResolver<QueueQueryEvent> {
 
     private final MessageFormatterService messageFormatter;
 
-    public QueueQueryResponseResolverV2(MessageFormatterService messageFormatter) {
+    public QueueQueryResponseResolver(MessageFormatterService messageFormatter) {
         this.messageFormatter = messageFormatter;
     }
 
     @Override
-    public InteractionResponse resolve(QueueQueryEventV2 event) {
+    public InteractionResponse resolve(QueueQueryEvent event) {
         String message = messageFormatter.formatQueueStatus(
                 event.getCurrentQueueSnapshot(),
                 event.getMaxQueueSize()

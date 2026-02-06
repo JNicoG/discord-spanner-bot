@@ -1,26 +1,30 @@
 package io.github.jnicog.discord.spanner.bot.command.handler;
 
-import io.github.jnicog.discord.spanner.bot.command.CommandContext;
+import io.github.jnicog.discord.spanner.bot.command.SlashCommandContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 import java.util.List;
 
 /**
- * V1 slash command handler that receives JDA-coupled context.
- *
- * @deprecated Use {@link SlashCommandHandlerV2} instead.
+ *  handler interface that receives JDA-free context.
+ * No responder is passed - responses are handled by the dispatcher.
  */
-@Deprecated
 public interface SlashCommandHandler {
+
     String getCommandName();
+
     default List<String> getAliases() {
         return List.of();
     }
 
-    // Unsure if this should be kept in.
-    // This is for commands that are already determined to be ephemeral or public
-    // so that the dispatcher has the ability to defer a response properly if needed
-    boolean isEphemeral();
-
-    AbstractCommandResult<?> handleCommand(CommandContext context);
+    /**
+     * Handle the command and return a domain result.
+     * The result should not contain any JDA-specific objects.
+     *
+     * @param context JDA-free slash command context
+     * @return A domain event representing the command outcome
+     */
+    AbstractCommandResult<?> handleCommand(SlashCommandContext context);
 }
+
+

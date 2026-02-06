@@ -1,7 +1,6 @@
 package io.github.jnicog.discord.spanner.bot;
 
 import com.google.common.base.Strings;
-import io.github.jnicog.discord.spanner.bot.command.dispatcher.SlashCommandDispatcher;
 import io.github.jnicog.discord.spanner.bot.command.registry.SlashCommandRegistry;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;

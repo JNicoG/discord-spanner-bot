@@ -1,14 +1,13 @@
 package io.github.jnicog.discord.spanner.bot.event;
 
-import io.github.jnicog.discord.spanner.bot.command.InteractionContext;
-
 /**
- * V1 abstract command result that holds JDA-coupled context.
+ * Base class for  command results that use JDA-free context.
+ * Unlike AbstractCommandResult, this doesn't require InteractionContext
+ * which contains the JDA responder.
  *
- * @deprecated Use {@link AbstractCommandResultV2} instead.
+ * @param <T> The type of context this result uses (e.g., SlashCommandContext, ButtonInteractionContext)
  */
-@Deprecated
-public abstract class AbstractCommandResult<T extends InteractionContext> {
+public abstract class AbstractCommandResult<T> {
 
     private final T context;
 
@@ -20,3 +19,4 @@ public abstract class AbstractCommandResult<T extends InteractionContext> {
         return context;
     }
 }
+

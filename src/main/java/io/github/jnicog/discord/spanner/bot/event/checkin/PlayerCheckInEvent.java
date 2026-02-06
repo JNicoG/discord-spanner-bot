@@ -1,24 +1,23 @@
 package io.github.jnicog.discord.spanner.bot.event.checkin;
 
-import io.github.jnicog.discord.spanner.bot.command.InteractionContext;
+import io.github.jnicog.discord.spanner.bot.command.ButtonInteractionContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 import java.util.Map;
 
 /**
- * @deprecated Use {@link PlayerCheckInEventV2} instead.
+ *  event for when a player successfully checks in.
  */
-@Deprecated
-public class PlayerCheckInEvent extends AbstractCommandResult<InteractionContext> implements CheckInEvent {
+public class PlayerCheckInEvent extends AbstractCommandResult<ButtonInteractionContext> implements CheckInEvent {
 
-    private long checkInMessageId;
+    private final long checkInMessageId;
     private final Map<Long, Boolean> updatedCheckInSnapshot;
 
-    public PlayerCheckInEvent(InteractionContext context,
-                              Map<Long, Boolean> updatedCheckInSnapshot,
-                              long checkInMessageId) {
+    public PlayerCheckInEvent(ButtonInteractionContext context,
+                                Map<Long, Boolean> updatedCheckInSnapshot,
+                                long checkInMessageId) {
         super(context);
-        this.updatedCheckInSnapshot = updatedCheckInSnapshot;
+        this.updatedCheckInSnapshot = Map.copyOf(updatedCheckInSnapshot);
         this.checkInMessageId = checkInMessageId;
     }
 
@@ -31,3 +30,4 @@ public class PlayerCheckInEvent extends AbstractCommandResult<InteractionContext
         return updatedCheckInSnapshot;
     }
 }
+

@@ -1,23 +1,22 @@
 package io.github.jnicog.discord.spanner.bot.event.queue;
 
-import io.github.jnicog.discord.spanner.bot.command.CommandContext;
+import io.github.jnicog.discord.spanner.bot.command.SlashCommandContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 import java.util.Set;
 
 /**
- * @deprecated Use {@link PlayerJoinedQueueEventV2} instead.
+ *  event for when a player successfully joins the queue.
  */
-@Deprecated
-public class PlayerJoinedQueueEvent extends AbstractCommandResult<CommandContext> {
+public class PlayerJoinedQueueEvent extends AbstractCommandResult<SlashCommandContext> {
 
     private final Set<Long> updatedQueueSnapshot;
     private final int maxQueueSize;
 
-    public PlayerJoinedQueueEvent(CommandContext commandContext,
-                                  Set<Long> updatedQueue,
-                                  int maxQueueSize) {
-        super(commandContext);
+    public PlayerJoinedQueueEvent(SlashCommandContext context,
+                                    Set<Long> updatedQueue,
+                                    int maxQueueSize) {
+        super(context);
         this.updatedQueueSnapshot = Set.copyOf(updatedQueue);
         this.maxQueueSize = maxQueueSize;
     }
@@ -29,5 +28,5 @@ public class PlayerJoinedQueueEvent extends AbstractCommandResult<CommandContext
     public int getMaxQueueSize() {
         return maxQueueSize;
     }
-
 }
+

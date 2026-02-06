@@ -1,27 +1,24 @@
 package io.github.jnicog.discord.spanner.bot.command.handler;
 
-import io.github.jnicog.discord.spanner.bot.command.CommandContext;
+import io.github.jnicog.discord.spanner.bot.command.SlashCommandContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 import io.github.jnicog.discord.spanner.bot.event.queue.PlayerAlreadyQueuedEvent;
 import io.github.jnicog.discord.spanner.bot.event.queue.PlayerJoinedQueueEvent;
 import io.github.jnicog.discord.spanner.bot.event.queue.QueueAlreadyFullEvent;
 import io.github.jnicog.discord.spanner.bot.queue.QueueOutcome;
 import io.github.jnicog.discord.spanner.bot.queue.QueueService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Set;
 
 /**
- * @deprecated Use {@link KeenCommandHandlerV2} instead.
+ *  handler for the /keen command.
+ * Uses SlashCommandContext and returns  events.
  */
-@Deprecated
-// @Component - Disabled in favor of KeenCommandHandlerV2
+@Component
 public class KeenCommandHandler implements SlashCommandHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(KeenCommandHandler.class);
 
     private final QueueService queueService;
 
@@ -40,12 +37,7 @@ public class KeenCommandHandler implements SlashCommandHandler {
     }
 
     @Override
-    public boolean isEphemeral() {
-        return false;
-    }
-
-    @Override
-    public AbstractCommandResult<?> handleCommand(CommandContext context) {
+    public AbstractCommandResult<?> handleCommand(SlashCommandContext context) {
         long userId = context.userId();
         long channelId = context.channelId();
 
@@ -55,12 +47,12 @@ public class KeenCommandHandler implements SlashCommandHandler {
 
         int maxQueueSize = queueService.showMaxQueueSize(channelId);
 
-        return switch(outcome) {
+        return switch (outcome) {
             case ENQUEUED -> new PlayerJoinedQueueEvent(context, queueSnapshot, maxQueueSize);
             case QUEUE_FULL -> new QueueAlreadyFullEvent(context);
             case ALREADY_QUEUED -> new PlayerAlreadyQueuedEvent(context);
             default -> throw new IllegalStateException("Unexpected queue outcome: " + outcome);
         };
-
     }
 }
+

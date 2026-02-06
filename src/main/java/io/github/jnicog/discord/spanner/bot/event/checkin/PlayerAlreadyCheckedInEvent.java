@@ -1,16 +1,15 @@
 package io.github.jnicog.discord.spanner.bot.event.checkin;
 
-import io.github.jnicog.discord.spanner.bot.command.ButtonContext;
+import io.github.jnicog.discord.spanner.bot.command.ButtonInteractionContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 /**
- * @deprecated Use {@link PlayerAlreadyCheckedInEventV2} instead.
+ *  event for when a player is already checked in.
  */
-@Deprecated
-public class PlayerAlreadyCheckedInEvent extends AbstractCommandResult<ButtonContext> {
+public class PlayerAlreadyCheckedInEvent extends AbstractCommandResult<ButtonInteractionContext> {
 
-    public PlayerAlreadyCheckedInEvent(ButtonContext context) {
+    public PlayerAlreadyCheckedInEvent(ButtonInteractionContext context) {
         super(context);
     }
-
 }
+

@@ -3,12 +3,11 @@ package io.github.jnicog.discord.spanner.bot.command;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 /**
- * V1 response resolver that works with V1 events.
+ *  resolver interface that converts command results to responses.
+ * This is a pure function approach.
  *
- * @param <T> The type of command result this handler processes
- * @deprecated Use {@link ResponseResolverV2} instead which works with V2 JDA-free events.
+ * @param <T> The type of command result this resolver processes
  */
-@Deprecated
 @FunctionalInterface
 public interface ResponseResolver<T extends AbstractCommandResult<?>> {
 
@@ -20,3 +19,4 @@ public interface ResponseResolver<T extends AbstractCommandResult<?>> {
      */
     InteractionResponse resolve(T event);
 }
+

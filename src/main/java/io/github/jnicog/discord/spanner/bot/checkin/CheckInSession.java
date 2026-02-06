@@ -1,6 +1,5 @@
 package io.github.jnicog.discord.spanner.bot.checkin;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -9,7 +8,7 @@ import java.util.stream.Collectors;
 
 public class CheckInSession {
 
-    private long messageId;
+    private volatile long messageId;
     private final long channelId;
     private final ConcurrentMap<Long, Boolean> userCheckInStatusMap;
     private final ReentrantLock lock = new ReentrantLock();
@@ -114,7 +113,8 @@ public class CheckInSession {
     public Map<Long, Boolean> getUserCheckInStatusSnapshot() {
         lock.lock();
         try {
-            return Collections.unmodifiableMap(userCheckInStatusMap);
+            // Return a true copy, not just a view
+            return Map.copyOf(userCheckInStatusMap);
         } finally {
             lock.unlock();
         }

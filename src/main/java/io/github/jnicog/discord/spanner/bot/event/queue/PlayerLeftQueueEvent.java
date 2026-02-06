@@ -1,26 +1,25 @@
 package io.github.jnicog.discord.spanner.bot.event.queue;
 
-import io.github.jnicog.discord.spanner.bot.command.CommandContext;
+import io.github.jnicog.discord.spanner.bot.command.SlashCommandContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 import io.github.jnicog.discord.spanner.bot.event.spanner.SpannerAwardingEvent;
 
 import java.util.Set;
 
 /**
- * @deprecated Use {@link PlayerLeftQueueEventV2} instead.
+ *  event for when a player leaves the queue.
  */
-@Deprecated
-public class PlayerLeftQueueEvent extends AbstractCommandResult<CommandContext> implements SpannerAwardingEvent {
+public class PlayerLeftQueueEvent extends AbstractCommandResult<SlashCommandContext> implements SpannerAwardingEvent {
 
     private final Set<Long> updatedQueueSnapshot;
     private final int maxQueueSize;
     private final boolean isCheckInSessionActive;
 
-    public PlayerLeftQueueEvent(CommandContext commandContext,
-                                Set<Long> updatedQueue,
-                                int maxQueueSize,
-                                boolean isCheckInSessionActive) {
-        super(commandContext);
+    public PlayerLeftQueueEvent(SlashCommandContext context,
+                                  Set<Long> updatedQueue,
+                                  int maxQueueSize,
+                                  boolean isCheckInSessionActive) {
+        super(context);
         this.updatedQueueSnapshot = Set.copyOf(updatedQueue);
         this.maxQueueSize = maxQueueSize;
         this.isCheckInSessionActive = isCheckInSessionActive;
@@ -34,6 +33,10 @@ public class PlayerLeftQueueEvent extends AbstractCommandResult<CommandContext> 
         return maxQueueSize;
     }
 
+    public boolean isCheckInSessionActive() {
+        return isCheckInSessionActive;
+    }
+
     @Override
     public long getTargetUserId() {
         return getContext().userId();
@@ -44,3 +47,4 @@ public class PlayerLeftQueueEvent extends AbstractCommandResult<CommandContext> 
         return getContext().channelId();
     }
 }
+

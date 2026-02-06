@@ -1,23 +1,22 @@
 package io.github.jnicog.discord.spanner.bot.event.queue;
 
-import io.github.jnicog.discord.spanner.bot.command.CommandContext;
+import io.github.jnicog.discord.spanner.bot.command.SlashCommandContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 import java.util.Set;
 
 /**
- * @deprecated Use {@link QueueQueryEventV2} instead.
+ *  event for querying the current queue state.
  */
-@Deprecated
-public class QueueQueryEvent extends AbstractCommandResult<CommandContext> {
+public class QueueQueryEvent extends AbstractCommandResult<SlashCommandContext> {
 
-    Set<Long> currentQueueSnapshot;
-    int maxQueueSize;
+    private final Set<Long> currentQueueSnapshot;
+    private final int maxQueueSize;
 
-    public QueueQueryEvent(CommandContext commandContext,
-                           Set<Long> currentQueueSnapshot,
-                           int maxQueueSize) {
-        super(commandContext);
+    public QueueQueryEvent(SlashCommandContext context,
+                             Set<Long> currentQueueSnapshot,
+                             int maxQueueSize) {
+        super(context);
         this.currentQueueSnapshot = Set.copyOf(currentQueueSnapshot);
         this.maxQueueSize = maxQueueSize;
     }
@@ -25,4 +24,9 @@ public class QueueQueryEvent extends AbstractCommandResult<CommandContext> {
     public Set<Long> getCurrentQueueSnapshot() {
         return currentQueueSnapshot;
     }
+
+    public int getMaxQueueSize() {
+        return maxQueueSize;
+    }
 }
+

@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class CheckInServiceImpl implements CheckInService {
@@ -25,7 +24,6 @@ public class CheckInServiceImpl implements CheckInService {
     private final ApplicationEventPublisher eventPublisher;
     private final ConcurrentMap<Long, CheckInSession> activeSessions = new ConcurrentHashMap<>();
 
-    private final ReentrantLock lock = new ReentrantLock();
 
     public CheckInServiceImpl(ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
@@ -69,10 +67,10 @@ public class CheckInServiceImpl implements CheckInService {
 
         CheckInAttemptResult result = session.checkInUser(userId);
 
-        // If all users have checked in, remove the session
+        // If all users have checked in, atomically remove the session only if it's still the same instance
         if (result == CheckInAttemptResult.SESSION_COMPLETED) {
             LOGGER.info("All users have checked in for channel {}. Session completed.", channelId);
-            activeSessions.remove(channelId);
+            activeSessions.remove(channelId, session);  // Atomic: only removes if session is still the same
         }
 
         return result;
@@ -88,11 +86,8 @@ public class CheckInServiceImpl implements CheckInService {
         CheckInAttemptResult result = session.cancelCheckIn(userId);
 
         if (result == CheckInAttemptResult.SESSION_CANCELLED) {
-            // atomic removal
-            activeSessions.remove(channelId);
-
-            // cancel the timeout task
-            // session.getTimeoutFuture().cancel();
+            // Atomic: only removes if session is still the same instance
+            activeSessions.remove(channelId, session);
         }
 
         return result;
@@ -138,10 +133,10 @@ public class CheckInServiceImpl implements CheckInService {
             return CancelResult.noActiveSession();
         }
 
-        // Get the message ID before cancelling
+        // Get the message ID before cancelling (volatile read is safe)
         long messageId = session.getMessageId();
 
-        // Get all participants except the cancelling user
+        // Get all participants except the cancelling user (snapshot is a copy)
         Set<Long> allParticipants = session.getUserCheckInStatusSnapshot().keySet();
         Set<Long> remainingUsers = allParticipants.stream()
                 .filter(userId -> userId != cancellingUserId)
@@ -150,7 +145,8 @@ public class CheckInServiceImpl implements CheckInService {
         CheckInAttemptResult result = session.cancelCheckIn(cancellingUserId);
 
         if (result == CheckInAttemptResult.SESSION_CANCELLED) {
-            activeSessions.remove(channelId);
+            // Atomic: only removes if session is still the same instance
+            activeSessions.remove(channelId, session);
             return CancelResult.cancelled(remainingUsers, messageId);
         } else if (result == CheckInAttemptResult.UNAUTHORISED) {
             return CancelResult.unauthorised();

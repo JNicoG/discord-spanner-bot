@@ -1,6 +1,6 @@
 package io.github.jnicog.discord.spanner.bot.checkin;
 
-import io.github.jnicog.discord.spanner.bot.event.queue.PlayerJoinedQueueEventV2;
+import io.github.jnicog.discord.spanner.bot.event.queue.PlayerJoinedQueueEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -27,7 +27,7 @@ public class StartCheckInTrigger {
 
     @EventListener
     @Order(2)
-    public void onQueueFilled(PlayerJoinedQueueEventV2 event) {
+    public void onQueueFilled(PlayerJoinedQueueEvent event) {
         if (!isQueueJustFilled(event)) {
             return;
         }
@@ -40,7 +40,7 @@ public class StartCheckInTrigger {
         );
     }
 
-    private boolean isQueueJustFilled(PlayerJoinedQueueEventV2 event) {
+    private boolean isQueueJustFilled(PlayerJoinedQueueEvent event) {
         return event.getUpdatedQueueSnapshot().size() == event.getMaxQueueSize();
     }
 }

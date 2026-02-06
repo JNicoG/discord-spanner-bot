@@ -1,25 +1,25 @@
 package io.github.jnicog.discord.spanner.bot.notification.resolver;
 
 import io.github.jnicog.discord.spanner.bot.command.InteractionResponse;
-import io.github.jnicog.discord.spanner.bot.command.ResponseResolverV2;
-import io.github.jnicog.discord.spanner.bot.event.checkin.ExpiredSessionCheckInEventV2;
+import io.github.jnicog.discord.spanner.bot.command.ResponseResolver;
+import io.github.jnicog.discord.spanner.bot.event.checkin.ExpiredSessionCheckInEvent;
 import io.github.jnicog.discord.spanner.bot.notification.MessageFormatterService;
 import org.springframework.stereotype.Component;
 
 /**
- * V2 ResponseResolver for ExpiredSessionCheckInEventV2.
+ *  ResponseResolver for ExpiredSessionCheckInEvent.
  */
 @Component
-public class ExpiredSessionCheckInResponseResolverV2 implements ResponseResolverV2<ExpiredSessionCheckInEventV2> {
+public class ExpiredSessionCheckInResponseResolver implements ResponseResolver<ExpiredSessionCheckInEvent> {
 
     private final MessageFormatterService messageFormatter;
 
-    public ExpiredSessionCheckInResponseResolverV2(MessageFormatterService messageFormatter) {
+    public ExpiredSessionCheckInResponseResolver(MessageFormatterService messageFormatter) {
         this.messageFormatter = messageFormatter;
     }
 
     @Override
-    public InteractionResponse resolve(ExpiredSessionCheckInEventV2 event) {
+    public InteractionResponse resolve(ExpiredSessionCheckInEvent event) {
         return new InteractionResponse.EphemeralReply(messageFormatter.formatExpiredSession());
     }
 }

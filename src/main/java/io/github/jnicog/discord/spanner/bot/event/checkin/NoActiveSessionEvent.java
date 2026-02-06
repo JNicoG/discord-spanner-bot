@@ -1,16 +1,15 @@
 package io.github.jnicog.discord.spanner.bot.event.checkin;
 
-import io.github.jnicog.discord.spanner.bot.command.InteractionContext;
+import io.github.jnicog.discord.spanner.bot.command.ButtonInteractionContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 /**
- * @deprecated Use {@link NoActiveSessionEventV2} instead.
+ *  event for when there is no active check-in session.
  */
-@Deprecated
-public class NoActiveSessionEvent extends AbstractCommandResult<InteractionContext> {
+public class NoActiveSessionEvent extends AbstractCommandResult<ButtonInteractionContext> {
 
-    public NoActiveSessionEvent(InteractionContext commandContext) {
-        super(commandContext);
+    public NoActiveSessionEvent(ButtonInteractionContext context) {
+        super(context);
     }
-
 }
+

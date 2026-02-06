@@ -1,20 +1,20 @@
 package io.github.jnicog.discord.spanner.bot.event.checkin;
 
 import io.github.jnicog.discord.spanner.bot.command.ButtonInteractionContext;
-import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResultV2;
+import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 import java.util.Map;
 
 /**
- * V2 event for when all players have completed check-in.
+ *  event for when all players have completed check-in.
  * Uses JDA-free ButtonInteractionContext.
  */
-public class CheckInCompletedEventV2 extends AbstractCommandResultV2<ButtonInteractionContext> {
+public class CheckInCompletedEvent extends AbstractCommandResult<ButtonInteractionContext> {
 
     private final long checkInMessageId;
     private final Map<Long, Boolean> finalCheckInSnapshot;
 
-    public CheckInCompletedEventV2(ButtonInteractionContext context,
+    public CheckInCompletedEvent(ButtonInteractionContext context,
                                    Map<Long, Boolean> finalCheckInSnapshot,
                                    long checkInMessageId) {
         super(context);
