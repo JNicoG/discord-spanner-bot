@@ -6,7 +6,11 @@ import io.github.jnicog.discord.spanner.bot.event.queue.PlayerJoinedQueueEvent;
 
 import java.util.stream.Collectors;
 
-// @Component - uncomment when ready to use
+/**
+ * @deprecated Use {@link PlayerJoinedQueueResponseResolverV2} instead which uses V2 events.
+ */
+@Deprecated
+// @Component - Disabled in favor of V2 resolver
 public class PlayerJoinedQueueResponseResolver implements ResponseResolver<PlayerJoinedQueueEvent> {
 
     @Override

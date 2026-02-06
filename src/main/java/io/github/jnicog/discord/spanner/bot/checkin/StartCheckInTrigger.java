@@ -7,27 +7,40 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+/**
+ * Listens for queue events and triggers check-in when the queue is filled.
+ *
+ * <p>This trigger uses the {@link CheckInSessionManager} interface (via {@link CheckInService})
+ * to start check-in sessions. It only depends on the session management capability,
+ * demonstrating the Interface Segregation Principle.</p>
+ */
 @Component
 public class StartCheckInTrigger {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StartCheckInTrigger.class);
 
-    private final CheckInService checkInService;
+    private final CheckInSessionManager checkInSessionManager;
 
-    public StartCheckInTrigger(CheckInService checkInService) {
-        this.checkInService = checkInService;
+    public StartCheckInTrigger(CheckInSessionManager checkInSessionManager) {
+        this.checkInSessionManager = checkInSessionManager;
     }
 
     @EventListener
     @Order(2)
-    public void onQueueInteractionEvent(PlayerJoinedQueueEventV2 event) {
-        boolean justFilledQueue = event.getUpdatedQueueSnapshot().size() == event.getMaxQueueSize();
-
-        if (justFilledQueue) {
-            LOGGER.info("Queue for channel {} filled. Triggering check-in event.", event.getContext().channelId());
-            checkInService.startCheckIn(event.getContext().channelId(), event.getUpdatedQueueSnapshot());
+    public void onQueueFilled(PlayerJoinedQueueEventV2 event) {
+        if (!isQueueJustFilled(event)) {
+            return;
         }
 
+        LOGGER.info("Queue for channel {} filled. Triggering check-in session.",
+                event.getContext().channelId());
+        checkInSessionManager.startCheckIn(
+                event.getContext().channelId(),
+                event.getUpdatedQueueSnapshot()
+        );
     }
 
+    private boolean isQueueJustFilled(PlayerJoinedQueueEventV2 event) {
+        return event.getUpdatedQueueSnapshot().size() == event.getMaxQueueSize();
+    }
 }

@@ -3,6 +3,7 @@ package io.github.jnicog.discord.spanner.bot.notification.resolver;
 import io.github.jnicog.discord.spanner.bot.command.InteractionResponse;
 import io.github.jnicog.discord.spanner.bot.command.ResponseResolverV2;
 import io.github.jnicog.discord.spanner.bot.event.checkin.PlayerAlreadyCheckedInEventV2;
+import io.github.jnicog.discord.spanner.bot.notification.MessageFormatterService;
 import org.springframework.stereotype.Component;
 
 /**
@@ -11,9 +12,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class PlayerAlreadyCheckedInResponseResolverV2 implements ResponseResolverV2<PlayerAlreadyCheckedInEventV2> {
 
+    private final MessageFormatterService messageFormatter;
+
+    public PlayerAlreadyCheckedInResponseResolverV2(MessageFormatterService messageFormatter) {
+        this.messageFormatter = messageFormatter;
+    }
+
     @Override
     public InteractionResponse resolve(PlayerAlreadyCheckedInEventV2 event) {
-        return new InteractionResponse.EphemeralReply("You have already checked in!");
+        return new InteractionResponse.EphemeralReply(messageFormatter.formatAlreadyCheckedIn());
     }
 }
 

@@ -3,9 +3,8 @@ package io.github.jnicog.discord.spanner.bot.notification.resolver;
 import io.github.jnicog.discord.spanner.bot.command.InteractionResponse;
 import io.github.jnicog.discord.spanner.bot.command.ResponseResolverV2;
 import io.github.jnicog.discord.spanner.bot.event.checkin.UnkeenDuringCheckInEventV2;
+import io.github.jnicog.discord.spanner.bot.notification.MessageFormatterService;
 import org.springframework.stereotype.Component;
-
-import java.util.stream.Collectors;
 
 /**
  * V2 ResponseResolver for UnkeenDuringCheckInEventV2.
@@ -16,22 +15,18 @@ import java.util.stream.Collectors;
 @Component
 public class UnkeenDuringCheckInResponseResolverV2 implements ResponseResolverV2<UnkeenDuringCheckInEventV2> {
 
+    private final MessageFormatterService messageFormatter;
+
+    public UnkeenDuringCheckInResponseResolverV2(MessageFormatterService messageFormatter) {
+        this.messageFormatter = messageFormatter;
+    }
+
     @Override
     public InteractionResponse resolve(UnkeenDuringCheckInEventV2 event) {
-        long userId = event.getContext().userId();
-        var remainingQueue = event.getRemainingUsersInQueue();
-        int maxQueueSize = event.getMaxQueueSize();
-
-        String currentQueue = remainingQueue.stream()
-                .map(id -> String.format("<@%s>", id))
-                .collect(Collectors.joining(", "));
-
-        String message = String.format(
-                "<@%s> has left the queue! [%d/%d]\n Current queue: %s",
-                userId,
-                remainingQueue.size(),
-                maxQueueSize,
-                remainingQueue.isEmpty() ? "No players in queue" : currentQueue
+        String message = messageFormatter.formatPlayerLeftQueue(
+                event.getContext().userId(),
+                event.getRemainingUsersInQueue(),
+                event.getMaxQueueSize()
         );
 
         return new InteractionResponse.PublicReply(message);

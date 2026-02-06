@@ -3,10 +3,8 @@ package io.github.jnicog.discord.spanner.bot.notification.resolver;
 import io.github.jnicog.discord.spanner.bot.command.InteractionResponse;
 import io.github.jnicog.discord.spanner.bot.command.ResponseResolverV2;
 import io.github.jnicog.discord.spanner.bot.event.checkin.CheckInCompletedEventV2;
+import io.github.jnicog.discord.spanner.bot.notification.MessageFormatterService;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * V2 ResponseResolver for CheckInCompletedEventV2.
@@ -15,24 +13,15 @@ import java.util.stream.Collectors;
 @Component
 public class CheckInCompletedResponseResolverV2 implements ResponseResolverV2<CheckInCompletedEventV2> {
 
-    private static final String CHECKED_IN_SYMBOL = "✔";
+    private final MessageFormatterService messageFormatter;
+
+    public CheckInCompletedResponseResolverV2(MessageFormatterService messageFormatter) {
+        this.messageFormatter = messageFormatter;
+    }
 
     @Override
     public InteractionResponse resolve(CheckInCompletedEventV2 event) {
-        Map<Long, Boolean> checkInStatusSnapshot = event.getFinalCheckInSnapshot();
-
-        // Format the player status list (all should be checked in)
-        String playerStatusList = checkInStatusSnapshot.entrySet().stream()
-                .map(entry -> String.format("<@%d> [%s]", entry.getKey(),
-                        entry.getValue() ? CHECKED_IN_SYMBOL : "X"))
-                .collect(Collectors.joining(" | "));
-
-        String message = String.format(
-                "All players have checked in.\n%s",
-                playerStatusList
-        );
-
-        // Update the message and remove buttons
+        String message = messageFormatter.formatCheckInCompleted(event.getFinalCheckInSnapshot());
         return new InteractionResponse.UpdateOriginalMessageAndClearComponents(message);
     }
 }
