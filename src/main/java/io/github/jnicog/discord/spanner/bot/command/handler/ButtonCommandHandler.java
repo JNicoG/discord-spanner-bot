@@ -18,6 +18,4 @@ public interface ButtonCommandHandler {
 
     AbstractCommandResult<?> handleCommand(ButtonContext context);
 
-    // Retrieve the message ID of which the button being interacted with is attached to.
-    long getMessageId();
 }

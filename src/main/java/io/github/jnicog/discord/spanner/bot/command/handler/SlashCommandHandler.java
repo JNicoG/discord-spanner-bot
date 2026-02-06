@@ -16,5 +16,5 @@ public interface SlashCommandHandler {
     // so that the dispatcher has the ability to defer a response properly if needed
     boolean isEphemeral();
 
-    AbstractCommandResult handleCommand(CommandContext context);
+    AbstractCommandResult<?> handleCommand(CommandContext context);
 }

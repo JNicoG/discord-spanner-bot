@@ -1,16 +1,15 @@
 package io.github.jnicog.discord.spanner.bot.event.checkin;
 
 import io.github.jnicog.discord.spanner.bot.checkin.CheckInSession;
-import io.github.jnicog.discord.spanner.bot.command.ButtonContext;
-import io.github.jnicog.discord.spanner.bot.command.CommandContext;
+import io.github.jnicog.discord.spanner.bot.command.InteractionContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 import io.github.jnicog.discord.spanner.bot.event.spanner.SpannerAwardingEvent;
 
-public class PlayerCancelledCheckInEvent extends AbstractCommandResult<ButtonContext> implements SpannerAwardingEvent, CheckInEvent {
+public class PlayerCancelledCheckInEvent extends AbstractCommandResult<InteractionContext> implements SpannerAwardingEvent, CheckInEvent {
 
     private final CheckInSession activeSession;
 
-    public PlayerCancelledCheckInEvent(ButtonContext commandContext,
+    public PlayerCancelledCheckInEvent(InteractionContext commandContext,
                                        CheckInSession activeSession) {
         super(commandContext);
         this.activeSession = activeSession;

@@ -6,9 +6,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class CheckInServiceImpl implements CheckInService {
@@ -18,6 +20,8 @@ public class CheckInServiceImpl implements CheckInService {
 
     private final ApplicationEventPublisher eventPublisher;
     private final ConcurrentMap<Long, CheckInSession> activeSessions = new ConcurrentHashMap<>();
+
+    private final ReentrantLock lock = new ReentrantLock();
 
     public CheckInServiceImpl(ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
@@ -49,25 +53,28 @@ public class CheckInServiceImpl implements CheckInService {
     }
 
     @Override
-    public CheckInResult userCheckIn(long channelId, long userId) {
+    public CheckInAttemptResult userCheckIn(long channelId, long userId, long messageId) {
         CheckInSession session = activeSessions.get(channelId);
         if (session == null) {
-            return CheckInResult.NO_ACTIVE_SESSION;
+            return CheckInAttemptResult.NO_ACTIVE_SESSION;
+        }
+        if (messageId != session.getMessageId()) {
+            return CheckInAttemptResult.EXPIRED_SESSION;
         }
 
         return session.checkInUser(userId);
     }
 
     @Override
-    public CheckInResult userCancel(long channelId, long userId) {
+    public CheckInAttemptResult userCancel(long channelId, long userId) {
         CheckInSession session = activeSessions.get(channelId);
         if (session == null) {
-            return CheckInResult.NO_ACTIVE_SESSION;
+            return CheckInAttemptResult.NO_ACTIVE_SESSION;
         }
 
-        CheckInResult result = session.cancelCheckIn(userId);
+        CheckInAttemptResult result = session.cancelCheckIn(userId);
 
-        if (result == CheckInResult.SESSION_CANCELLED) {
+        if (result == CheckInAttemptResult.SESSION_CANCELLED) {
             // atomic removal
             activeSessions.remove(channelId);
 
@@ -79,17 +86,26 @@ public class CheckInServiceImpl implements CheckInService {
     }
 
     @Override
-    public CheckInResult completeSession(long channelId) {
+    public CheckInAttemptResult completeSession(long channelId) {
         return null;
     }
 
     @Override
-    public CheckInResult timeoutSession(long channelId) {
+    public CheckInAttemptResult timeoutSession(long channelId) {
         return null;
     }
 
     @Override
     public boolean hasActiveSession(long channelId) {
         return activeSessions.containsKey(channelId);
+    }
+
+    @Override
+    public Map<Long, Boolean> getUpdatedCheckInSnapshot(long channelId) {
+        CheckInSession session = activeSessions.get(channelId);
+        if (session == null) {
+            throw new IllegalStateException("Failed to get check-in snapshot: No active check-in session found for channelId: " + channelId);
+        }
+        return session.getUserCheckInStatusSnapshot();
     }
 }

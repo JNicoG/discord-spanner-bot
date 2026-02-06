@@ -51,7 +51,14 @@ public class JdaCheckInMessageGatewayImpl implements CheckInMessageGateway {
     }
 
     @Override
-    public void updateCheckInMessage(long channelId, String message) {
+    public void updateCheckInMessage(long channelId, long messageId, String message) {
+        TextChannel channel = jda.getTextChannelById(channelId);
+        if (channel == null) {
+            throw new IllegalArgumentException("Channel with ID " + channelId + " not found");
+        }
 
+        channel.editMessageById(messageId, message)
+                .submit()
+                .thenAccept(ignored -> {});
     }
 }

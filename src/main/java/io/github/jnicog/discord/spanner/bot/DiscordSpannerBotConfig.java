@@ -6,6 +6,7 @@ import io.github.jnicog.discord.spanner.bot.command.registry.SlashCommandRegistr
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
+
+import java.util.List;
 
 @Configuration
 @Profile("!test")
@@ -22,8 +25,15 @@ public class DiscordSpannerBotConfig {
 
     private static final String SPANNER_BOT_TOKEN_ENV = "SPANNER_BOT_TOKEN";
 
+    private final List<ListenerAdapter> eventListeners;
+
+    public DiscordSpannerBotConfig(List<ListenerAdapter> eventListeners) {
+        this.eventListeners = eventListeners;
+    }
+
     @Bean
-    public JDA jda(Environment env, SlashCommandDispatcher slashCommandDispatcher, SlashCommandRegistry commandRegistry) throws InterruptedException {
+    public JDA jda(Environment env,
+                   SlashCommandRegistry commandRegistry) throws InterruptedException {
         String botToken = env.getProperty(SPANNER_BOT_TOKEN_ENV);
 
         if (Strings.isNullOrEmpty(botToken)) {
@@ -35,7 +45,7 @@ public class DiscordSpannerBotConfig {
         JDA jda = JDABuilder.createDefault(botToken)
                 .setActivity(Activity.playing("Looking for Spanners"))
                 .enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
-                .addEventListeners(slashCommandDispatcher)
+                .addEventListeners(eventListeners.toArray())
                 .build()
                 .awaitReady();
 

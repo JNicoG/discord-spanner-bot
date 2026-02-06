@@ -28,7 +28,7 @@ public class CancelCheckInTrigger {
         long userId = event.getContext().userId();
         long channelId = event.getContext().channelId();
 
-        CheckInResult checkInResult = checkInService.userCancel(channelId, userId);
+        CheckInAttemptResult checkInResult = checkInService.userCancel(channelId, userId);
 
         switch (checkInResult) {
             case UNAUTHORISED -> eventPublisher.publishEvent(new UnauthorisedCheckInEvent(event.getContext()));

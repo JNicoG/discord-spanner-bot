@@ -26,11 +26,11 @@ public class CheckInSession {
      * @param userId ID of the user attempting to check-in.
      * @return CheckInResult indicating the outcome of the check-in attempt.
      */
-    public CheckInResult checkInUser(long userId) {
+    public CheckInAttemptResult checkInUser(long userId) {
         lock.lock();
         try {
             if (!userCheckInStatusMap.containsKey(userId)) {
-                return CheckInResult.UNAUTHORISED;
+                return CheckInAttemptResult.UNAUTHORISED;
             }
 
             Boolean status = userCheckInStatusMap.get(userId);
@@ -40,10 +40,10 @@ public class CheckInSession {
 
             if (!status) {
                 userCheckInStatusMap.replace(userId, true);
-                return CheckInResult.CHECKED_IN;
+                return CheckInAttemptResult.CHECKED_IN;
             }
 
-            return CheckInResult.ALREADY_CHECKED_IN;
+            return CheckInAttemptResult.ALREADY_CHECKED_IN;
 
         } finally {
             lock.unlock();
@@ -56,12 +56,12 @@ public class CheckInSession {
      * @param userId ID of the user requesting to cancel the check-in session.
      * @return CheckInResult indicating the outcome of the cancellation attempt.
      */
-    public CheckInResult cancelCheckIn(long userId) {
+    public CheckInAttemptResult cancelCheckIn(long userId) {
         lock.lock();
         try {
             // Authorisation check: only users who are part of the session can cancel it
             if (!userCheckInStatusMap.containsKey(userId)) {
-                return CheckInResult.UNAUTHORISED;
+                return CheckInAttemptResult.UNAUTHORISED;
             }
 
             Boolean status = userCheckInStatusMap.get(userId);
@@ -69,7 +69,7 @@ public class CheckInSession {
                 throw new IllegalStateException("User check-in status is null for userId: " + userId);
             }
 
-            return CheckInResult.SESSION_CANCELLED;
+            return CheckInAttemptResult.SESSION_CANCELLED;
 
         } finally {
             lock.unlock();
