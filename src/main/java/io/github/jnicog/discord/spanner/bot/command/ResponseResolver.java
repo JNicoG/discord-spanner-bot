@@ -3,10 +3,10 @@ package io.github.jnicog.discord.spanner.bot.command;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 /**
- *  resolver interface that converts command results to responses.
- * This is a pure function approach.
+ * A handler that converts command results to responses.
+ * This replaces the InteractionResponder pattern with pure functions.
  *
- * @param <T> The type of command result this resolver processes
+ * @param <T> The type of command result this handler processes
  */
 @FunctionalInterface
 public interface ResponseResolver<T extends AbstractCommandResult<?>> {

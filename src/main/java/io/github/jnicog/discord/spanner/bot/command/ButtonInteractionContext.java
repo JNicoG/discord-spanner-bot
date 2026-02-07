@@ -4,6 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.Objects;
 
 /**
+ * JDA-decoupled context for button interactions.
  * Does not contain any responder - responses are returned from handlers instead.
  */
 public record ButtonInteractionContext(

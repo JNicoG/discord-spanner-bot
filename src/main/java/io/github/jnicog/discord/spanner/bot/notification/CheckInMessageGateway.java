@@ -5,7 +5,8 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Gateway for sending and managing check-in messages in Discord channels.
  *
- * <p>This interface handles different use cases:</p>
+ * <p>This interface is <b>NOT redundant</b> with {@link io.github.jnicog.discord.spanner.bot.command.InteractionResponse}
+ * and response resolvers because it handles different use cases:</p>
  *
  * <ul>
  *   <li><b>Proactive messaging</b> - {@link #sendCheckInStartMessage} sends a NEW message to a channel,

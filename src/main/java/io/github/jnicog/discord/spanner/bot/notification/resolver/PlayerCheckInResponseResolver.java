@@ -22,7 +22,7 @@ public class PlayerCheckInResponseResolver implements ResponseResolver<PlayerChe
     @Override
     public InteractionResponse resolve(PlayerCheckInEvent event) {
         String message = messageFormatter.formatCheckInProgress(event.getUpdatedCheckInSnapshot());
-        return new InteractionResponse.UpdateOriginalMessage(message);
+        return new InteractionResponse.EditButtonMessage(message);
     }
 }
 

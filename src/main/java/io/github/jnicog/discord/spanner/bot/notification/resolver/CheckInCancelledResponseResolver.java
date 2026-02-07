@@ -26,7 +26,7 @@ public class CheckInCancelledResponseResolver implements ResponseResolver<CheckI
                 event.getRemainingUsersForQueue(),
                 event.getMaxQueueSize()
         );
-        return new InteractionResponse.UpdateOriginalMessageAndClearComponents(message);
+        return new InteractionResponse.EditButtonMessageAndClearComponents(message);
     }
 }
 

@@ -121,11 +121,21 @@ public class CheckInSession {
     }
 
     public long getMessageId() {
-        return messageId;
+        lock.lock();
+        try {
+            return messageId;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void setMessageId(long messageId) {
-        this.messageId = messageId;
+        lock.lock();
+        try {
+            this.messageId = messageId;
+        } finally {
+            lock.unlock();
+        }
     }
 
 }

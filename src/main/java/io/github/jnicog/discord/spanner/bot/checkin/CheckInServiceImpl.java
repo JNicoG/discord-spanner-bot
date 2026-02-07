@@ -36,61 +36,75 @@ public class CheckInServiceImpl implements CheckInService {
 
         CheckInStartedEvent checkInStartedEvent = new CheckInStartedEvent(session);
         eventPublisher.publishEvent(checkInStartedEvent);
-
-        // Schedule timeout task to cancel session after CHECK_IN_TIMEOUT duration
-//        ScheduledFuture<?> future = taskScheduler.schedule(() -> {
-//            handleTimeout(channelId),
-//            Instant.now().plus(CHECK_IN_TIMEOUT);
-//        });
-//        session.setTimeoutFuture(future);
     }
 
     @Override
     public void registerMessageId(long channelId, long messageId) {
-        CheckInSession session = activeSessions.get(channelId);
-        if (session == null) {
-            throw new IllegalStateException("Failed to register check-in message ID: No active check-in session found for channelId: " + channelId);
-        }
-        session.setMessageId(messageId);
+        activeSessions.compute(channelId, (key, session) -> {
+            if (session == null) {
+                throw new IllegalStateException("Failed to register check-in message ID: No active check-in session found for channelId: " + channelId);
+            }
+            session.setMessageId(messageId);
+            return session;
+        });
     }
 
     @Override
     public CheckInAttemptResult userCheckIn(long channelId, long userId, long messageId) {
-        CheckInSession session = activeSessions.get(channelId);
-        if (session == null) {
-            return CheckInAttemptResult.NO_ACTIVE_SESSION;
-        }
-        LOGGER.debug("User {} attempting to check-in to channel {} with messageId {}. Current session messageId: {}", userId, channelId, messageId, session.getMessageId());
-        if (messageId != session.getMessageId()) {
-            return CheckInAttemptResult.EXPIRED_SESSION;
-        }
+        // Use a holder to capture the result from within compute
+        final CheckInAttemptResult[] resultHolder = new CheckInAttemptResult[1];
 
-        CheckInAttemptResult result = session.checkInUser(userId);
+        activeSessions.compute(channelId, (key, session) -> {
+            if (session == null) {
+                resultHolder[0] = CheckInAttemptResult.NO_ACTIVE_SESSION;
+                return null;
+            }
 
-        // If all users have checked in, atomically remove the session only if it's still the same instance
-        if (result == CheckInAttemptResult.SESSION_COMPLETED) {
-            LOGGER.info("All users have checked in for channel {}. Session completed.", channelId);
-            activeSessions.remove(channelId, session);  // Atomic: only removes if session is still the same
-        }
+            LOGGER.debug("User {} attempting to check-in to channel {} with messageId {}. Current session messageId: {}",
+                    userId, channelId, messageId, session.getMessageId());
 
-        return result;
+            if (messageId != session.getMessageId()) {
+                resultHolder[0] = CheckInAttemptResult.EXPIRED_SESSION;
+                return session;
+            }
+
+            CheckInAttemptResult result = session.checkInUser(userId);
+            resultHolder[0] = result;
+
+            // If all users have checked in, remove the session
+            if (result == CheckInAttemptResult.SESSION_COMPLETED) {
+                LOGGER.info("All users have checked in for channel {}. Session completed.", channelId);
+                return null; // Remove the session
+            }
+
+            return session;
+        });
+
+        return resultHolder[0];
     }
 
     @Override
     public CheckInAttemptResult userCancel(long channelId, long userId) {
-        CheckInSession session = activeSessions.get(channelId);
-        if (session == null) {
-            return CheckInAttemptResult.NO_ACTIVE_SESSION;
-        }
+        // Use a holder to capture the result from within compute
+        final CheckInAttemptResult[] resultHolder = new CheckInAttemptResult[1];
 
-        CheckInAttemptResult result = session.cancelCheckIn(userId);
+        activeSessions.compute(channelId, (key, session) -> {
+            if (session == null) {
+                resultHolder[0] = CheckInAttemptResult.NO_ACTIVE_SESSION;
+                return null;
+            }
 
-        if (result == CheckInAttemptResult.SESSION_CANCELLED) {
-            // Atomic: only removes if session is still the same instance
-            activeSessions.remove(channelId, session);
-        }
+            CheckInAttemptResult result = session.cancelCheckIn(userId);
+            resultHolder[0] = result;
 
-        return result;
+            if (result == CheckInAttemptResult.SESSION_CANCELLED) {
+                return null; // Remove the session
+            }
+
+            return session;
+        });
+
+        return resultHolder[0];
     }
 
     @Override
@@ -99,8 +113,32 @@ public class CheckInServiceImpl implements CheckInService {
     }
 
     @Override
-    public CheckInAttemptResult timeoutSession(long channelId) {
-        return null;
+    public CheckInTimeoutResult timeoutSession(long channelId) {
+        // Use a holder to capture the result from within compute
+        final CheckInTimeoutResult[] resultHolder = new CheckInTimeoutResult[1];
+
+        activeSessions.compute(channelId, (key, session) -> {
+            if (session == null) {
+                resultHolder[0] = CheckInTimeoutResult.noActiveSession(channelId);
+                return null;
+            }
+
+            long messageId = session.getMessageId();
+            Set<Long> checkedIn = session.getCheckedInUsers();
+            Set<Long> notCheckedIn = session.getNotCheckedInUsers();
+
+            resultHolder[0] = new CheckInTimeoutResult(
+                    CheckInAttemptResult.SESSION_TIMED_OUT,
+                    notCheckedIn,
+                    checkedIn,
+                    messageId,
+                    channelId
+            );
+
+            return null; // Remove the session
+        });
+
+        return resultHolder[0];
     }
 
     @Override
@@ -128,30 +166,38 @@ public class CheckInServiceImpl implements CheckInService {
 
     @Override
     public CancelResult cancelAndGetRemainingUsers(long channelId, long cancellingUserId) {
-        CheckInSession session = activeSessions.get(channelId);
-        if (session == null) {
-            return CancelResult.noActiveSession();
-        }
+        // Use a holder to capture the result from within compute
+        final CancelResult[] resultHolder = new CancelResult[1];
 
-        // Get the message ID before cancelling (volatile read is safe)
-        long messageId = session.getMessageId();
+        activeSessions.compute(channelId, (key, session) -> {
+            if (session == null) {
+                resultHolder[0] = CancelResult.noActiveSession();
+                return null;
+            }
 
-        // Get all participants except the cancelling user (snapshot is a copy)
-        Set<Long> allParticipants = session.getUserCheckInStatusSnapshot().keySet();
-        Set<Long> remainingUsers = allParticipants.stream()
-                .filter(userId -> userId != cancellingUserId)
-                .collect(java.util.stream.Collectors.toSet());
+            // Get the message ID before cancelling (within lock context of compute)
+            long messageId = session.getMessageId();
 
-        CheckInAttemptResult result = session.cancelCheckIn(cancellingUserId);
+            // Get all participants except the cancelling user (snapshot is a copy)
+            Set<Long> allParticipants = session.getUserCheckInStatusSnapshot().keySet();
+            Set<Long> remainingUsers = allParticipants.stream()
+                    .filter(userId -> userId != cancellingUserId)
+                    .collect(java.util.stream.Collectors.toSet());
 
-        if (result == CheckInAttemptResult.SESSION_CANCELLED) {
-            // Atomic: only removes if session is still the same instance
-            activeSessions.remove(channelId, session);
-            return CancelResult.cancelled(remainingUsers, messageId);
-        } else if (result == CheckInAttemptResult.UNAUTHORISED) {
-            return CancelResult.unauthorised();
-        }
+            CheckInAttemptResult result = session.cancelCheckIn(cancellingUserId);
 
-        return new CancelResult(result, Set.of(), messageId);
+            if (result == CheckInAttemptResult.SESSION_CANCELLED) {
+                resultHolder[0] = CancelResult.cancelled(remainingUsers, messageId);
+                return null; // Remove the session
+            } else if (result == CheckInAttemptResult.UNAUTHORISED) {
+                resultHolder[0] = CancelResult.unauthorised();
+                return session; // Keep the session
+            }
+
+            resultHolder[0] = new CancelResult(result, Set.of(), messageId);
+            return session;
+        });
+
+        return resultHolder[0];
     }
 }

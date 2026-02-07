@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 /**
  * Centralised service for formatting Discord messages.
- * Extracts message formatting logic from response resolvers
+ * Extracts message formatting logic from response resolvers.
  */
 @Service
 public class MessageFormatterService {
@@ -164,7 +164,7 @@ public class MessageFormatterService {
      * Formats the "unauthorised check-in" message.
      */
     public String formatUnauthorisedCheckIn() {
-        return "You are not part of this check-in session.";
+        return "You are not a member of this check-in!";
     }
 
     /**
@@ -179,6 +179,37 @@ public class MessageFormatterService {
      */
     public String formatExpiredSession() {
         return "This check-in session has expired.";
+    }
+
+    /**
+     * Formats the check-in timeout message.
+     * Displays which users did not check in and which users will be returned to the queue.
+     *
+     * @param usersWhoDidNotCheckIn Set of user IDs who failed to check in
+     * @param usersWhoCheckedIn Set of user IDs who checked in (will be returned to queue)
+     * @return Formatted timeout message
+     */
+    public String formatCheckInTimeout(Set<Long> usersWhoDidNotCheckIn, Set<Long> usersWhoCheckedIn) {
+        StringBuilder message = new StringBuilder("Check-in has been cancelled.\n");
+
+        if (usersWhoDidNotCheckIn.isEmpty()) {
+            message.append("All players checked in on time.\n");
+        } else {
+            String notCheckedInList = formatUserList(usersWhoDidNotCheckIn);
+            message.append("The following players did not check-in on time: ")
+                   .append(notCheckedInList)
+                   .append("\n");
+        }
+
+        if (usersWhoCheckedIn.isEmpty()) {
+            message.append("No remaining players to return to the queue.");
+        } else {
+            String checkedInList = formatUserList(usersWhoCheckedIn);
+            message.append("The following remaining players will be returned to the queue: ")
+                   .append(checkedInList);
+        }
+
+        return message.toString();
     }
 
     // ==================== Helper Methods ====================

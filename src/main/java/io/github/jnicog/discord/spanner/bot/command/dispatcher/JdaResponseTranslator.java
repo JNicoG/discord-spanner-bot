@@ -1,7 +1,7 @@
 package io.github.jnicog.discord.spanner.bot.command.dispatcher;
 
 import io.github.jnicog.discord.spanner.bot.command.InteractionResponse;
-import net.dv8tion.jda.api.interactions.callbacks.IMessageEditCallback;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +15,32 @@ import org.springframework.stereotype.Component;
 public class JdaResponseTranslator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JdaResponseTranslator.class);
+
+    /**
+     * Handles responses for ButtonInteractionEvent specifically.
+     * Supports button-specific response types like EditButtonMessageAndClearComponents.
+     */
+    public void send(ButtonInteractionEvent event, InteractionResponse response) {
+        switch (response) {
+            case InteractionResponse.EditButtonMessage(String content) ->
+                event.editMessage(content)
+                    .queue(
+                        __ -> {},
+                        error -> LOGGER.error("Failed to edit button message: {}", error.getMessage())
+                    );
+
+            case InteractionResponse.EditButtonMessageAndClearComponents(String content) ->
+                event.editMessage(content)
+                    .setComponents()  // Clear all components (buttons, etc.)
+                    .queue(
+                        __ -> {},
+                        error -> LOGGER.error("Failed to edit button message and clear components: {}", error.getMessage())
+                    );
+
+            // Delegate other response types to the generic handler
+            default -> send((IReplyCallback) event, response);
+        }
+    }
 
     public void send(IReplyCallback interaction, InteractionResponse response) {
         switch (response) {
@@ -31,41 +57,32 @@ public class JdaResponseTranslator {
                 );
 
             case InteractionResponse.EditMessage(long messageId, String content) ->
-                interaction.deferReply().queue(
-                    __ -> interaction.getHook().editMessageById(messageId, content).queue(
-                        ___ -> {},
-                        error -> LOGGER.error("Failed to edit message {}: {}", messageId, error.getMessage())
-                    ),
-                    error -> LOGGER.error("Failed to defer reply before editing: {}", error.getMessage())
+                interaction.getHook().editMessageById(messageId, content).queue(
+                    __ -> {},
+                    error -> LOGGER.error("Failed to edit message {}: {}", messageId, error.getMessage())
                 );
 
-            case InteractionResponse.UpdateOriginalMessage(String content) -> {
-                if (interaction instanceof IMessageEditCallback editCallback) {
-                    // For button interactions - acknowledge and edit the message the button is on
-                    editCallback.editMessage(content).queue(
-                        __ -> {},
-                        error -> LOGGER.error("Failed to update original message: {}", error.getMessage())
-                    );
-                } else {
-                    LOGGER.error("UpdateOriginalMessage used on non-button interaction");
-                    interaction.reply("An error occurred.").setEphemeral(true).queue();
-                }
-            }
+            case InteractionResponse.UpdateOriginalMessage(String content) ->
+                interaction.getHook().editOriginal(content).queue(
+                    __ -> {},
+                    error -> LOGGER.error("Failed to update original message: {}", error.getMessage())
+                );
 
-            case InteractionResponse.UpdateOriginalMessageAndClearComponents(String content) -> {
-                if (interaction instanceof IMessageEditCallback editCallback) {
-                    // For button interactions - acknowledge, update message, and remove all components
-                    editCallback.editMessage(content)
-                        .setComponents()  // Empty components list removes all buttons
-                        .queue(
-                            __ -> {},
-                            error -> LOGGER.error("Failed to update original message and clear components: {}", error.getMessage())
-                        );
-                } else {
-                    LOGGER.error("UpdateOriginalMessageAndClearComponents used on non-button interaction");
-                    interaction.reply("An error occurred.").setEphemeral(true).queue();
-                }
-            }
+            case InteractionResponse.UpdateOriginalMessageAndClearComponents(String content) ->
+                interaction.getHook().editOriginal(content)
+                    .setComponents()  // Clear all components (buttons, etc.)
+                    .queue(
+                        __ -> {},
+                        error -> LOGGER.error("Failed to update original message and clear components: {}", error.getMessage())
+                    );
+
+            case InteractionResponse.EditButtonMessage(String content) ->
+                // This should only be used with ButtonInteractionEvent
+                LOGGER.error("EditButtonMessage used with non-button interaction");
+
+            case InteractionResponse.EditButtonMessageAndClearComponents(String content) ->
+                // This should only be used with ButtonInteractionEvent
+                LOGGER.error("EditButtonMessageAndClearComponents used with non-button interaction");
 
             case InteractionResponse.DeferReply(boolean ephemeral) ->
                 interaction.deferReply(ephemeral).queue(

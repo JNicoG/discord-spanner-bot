@@ -30,10 +30,12 @@ public interface CheckInSessionManager {
     CheckInAttemptResult completeSession(long channelId);
 
     /**
-     * Handles session timeout.
+     * Handles session timeout. Removes the session and returns information about
+     * which users checked in and which did not.
+     * 
      * @param channelId The channel ID
-     * @return Result indicating the outcome
+     * @return Result containing users who did/didn't check in and the message ID
      */
-    CheckInAttemptResult timeoutSession(long channelId);
+    CheckInTimeoutResult timeoutSession(long channelId);
 }
 

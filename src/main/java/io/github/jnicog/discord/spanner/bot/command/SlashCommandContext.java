@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
+ * JDA-decoupled context for slash commands.
  * Does not contain any responder - responses are returned from handlers instead.
  */
 public record SlashCommandContext(

@@ -22,7 +22,7 @@ public class CheckInCompletedResponseResolver implements ResponseResolver<CheckI
     @Override
     public InteractionResponse resolve(CheckInCompletedEvent event) {
         String message = messageFormatter.formatCheckInCompleted(event.getFinalCheckInSnapshot());
-        return new InteractionResponse.UpdateOriginalMessageAndClearComponents(message);
+        return new InteractionResponse.EditButtonMessageAndClearComponents(message);
     }
 }
 
