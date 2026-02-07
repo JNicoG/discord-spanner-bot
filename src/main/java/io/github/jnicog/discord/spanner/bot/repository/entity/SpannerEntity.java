@@ -1,12 +1,9 @@
 package io.github.jnicog.discord.spanner.bot.repository.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,25 +13,17 @@ import java.time.OffsetDateTime;
 
 /**
  * JPA entity representing a spanner record for a user in a channel.
+ * Uses a composite primary key of (user_id, channel_id).
  */
 @Entity
-@Table(name = "spanner", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"user_id", "channel_id"})
-})
+@Table(name = "spanner")
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SpannerEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
-
-    @Column(name = "channel_id", nullable = false)
-    private Long channelId;
+    @EmbeddedId
+    private SpannerId id;
 
     @Column(name = "spanner_count", nullable = false)
     private Integer spannerCount = 0;
@@ -46,11 +35,18 @@ public class SpannerEntity {
     private OffsetDateTime updatedAt;
 
     public SpannerEntity(Long userId, Long channelId) {
-        this.userId = userId;
-        this.channelId = channelId;
+        this.id = new SpannerId(userId, channelId);
         this.spannerCount = 0;
         this.createdAt = OffsetDateTime.now();
         this.updatedAt = OffsetDateTime.now();
+    }
+
+    public Long getUserId() {
+        return id.getUserId();
+    }
+
+    public Long getChannelId() {
+        return id.getChannelId();
     }
 
     public void incrementSpannerCount() {

@@ -2,13 +2,12 @@
 -- Initial schema for the spanner tracking system
 
 CREATE TABLE IF NOT EXISTS spanner (
-    id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
     channel_id BIGINT NOT NULL,
     spanner_count INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uk_spanner_user_channel UNIQUE (user_id, channel_id)
+    CONSTRAINT pk_spanner PRIMARY KEY (user_id, channel_id)
 );
 
 CREATE INDEX idx_spanner_user_id ON spanner(user_id);

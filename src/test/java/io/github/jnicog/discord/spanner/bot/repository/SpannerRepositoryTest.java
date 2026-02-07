@@ -12,7 +12,9 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @Import({TestContainersConfig.class, TestConfig.class})
@@ -39,10 +41,10 @@ class SpannerRepositoryTest {
 
         Optional<SpannerEntity> found = spannerRepository.findByUserIdAndChannelId(USER_ID_1, CHANNEL_ID_1);
 
-        assertThat(found).isPresent();
-        assertThat(found.get().getUserId()).isEqualTo(USER_ID_1);
-        assertThat(found.get().getChannelId()).isEqualTo(CHANNEL_ID_1);
-        assertThat(found.get().getSpannerCount()).isZero();
+        assertTrue(found.isPresent());
+        assertEquals(USER_ID_1, found.get().getUserId());
+        assertEquals(CHANNEL_ID_1, found.get().getChannelId());
+        assertEquals(0, found.get().getSpannerCount());
     }
 
     @Test
@@ -55,8 +57,8 @@ class SpannerRepositoryTest {
 
         Optional<SpannerEntity> found = spannerRepository.findByUserIdAndChannelId(USER_ID_1, CHANNEL_ID_1);
 
-        assertThat(found).isPresent();
-        assertThat(found.get().getSpannerCount()).isEqualTo(1);
+        assertTrue(found.isPresent());
+        assertEquals(1, found.get().getSpannerCount());
     }
 
     @Test
@@ -67,15 +69,15 @@ class SpannerRepositoryTest {
 
         Optional<Integer> count = spannerRepository.getSpannerCountByUserIdAndChannelId(USER_ID_1, CHANNEL_ID_1);
 
-        assertThat(count).isPresent();
-        assertThat(count.get()).isEqualTo(5);
+        assertTrue(count.isPresent());
+        assertEquals(5, count.get());
     }
 
     @Test
     void shouldReturnEmptyWhenNoSpannerRecord() {
         Optional<Integer> count = spannerRepository.getSpannerCountByUserIdAndChannelId(USER_ID_1, CHANNEL_ID_1);
 
-        assertThat(count).isEmpty();
+        assertTrue(count.isEmpty());
     }
 
     @Test
@@ -90,7 +92,7 @@ class SpannerRepositoryTest {
 
         int totalCount = spannerRepository.getTotalSpannerCountByUserId(USER_ID_1);
 
-        assertThat(totalCount).isEqualTo(10);
+        assertEquals(10, totalCount);
     }
 
     @Test
@@ -104,7 +106,7 @@ class SpannerRepositoryTest {
 
         var userEntities = spannerRepository.findByUserId(USER_ID_1);
 
-        assertThat(userEntities).hasSize(2);
+        assertEquals(2, userEntities.size());
     }
 
     @Test
@@ -118,7 +120,7 @@ class SpannerRepositoryTest {
 
         var channelEntities = spannerRepository.findByChannelId(CHANNEL_ID_1);
 
-        assertThat(channelEntities).hasSize(2);
+        assertEquals(2, channelEntities.size());
     }
 
     @Test
@@ -126,8 +128,8 @@ class SpannerRepositoryTest {
         SpannerEntity entity = new SpannerEntity(USER_ID_1, CHANNEL_ID_1);
         spannerRepository.save(entity);
 
-        assertThat(spannerRepository.existsByUserIdAndChannelId(USER_ID_1, CHANNEL_ID_1)).isTrue();
-        assertThat(spannerRepository.existsByUserIdAndChannelId(USER_ID_2, CHANNEL_ID_1)).isFalse();
+        assertTrue(spannerRepository.existsByUserIdAndChannelId(USER_ID_1, CHANNEL_ID_1));
+        assertFalse(spannerRepository.existsByUserIdAndChannelId(USER_ID_2, CHANNEL_ID_1));
     }
 }
 
