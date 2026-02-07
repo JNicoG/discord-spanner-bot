@@ -1,9 +1,0 @@
-services:
-  postgres:
-    image: 'postgres:17'
-    environment:
-      - 'POSTGRES_DATABASE=${SPANNER_BOT_DB_NAME}'
-      - 'POSTGRES_USER=${SPANNER_BOT_DB_USERNAME}'
-      - 'POSTGRES_PASSWORD=${SPANNER_BOT_DB_PASSWORD}'
-    ports:
-      - '5432'

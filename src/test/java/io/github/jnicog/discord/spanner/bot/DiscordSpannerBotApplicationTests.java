@@ -10,7 +10,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ActiveProfiles("test")
-@Import(TestConfig.class)
+@Import({TestContainersConfig.class, TestConfig.class})
 class DiscordSpannerBotApplicationTests {
 
 	@Autowired

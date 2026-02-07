@@ -8,8 +8,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableScheduling
 @Import({DiscordSpannerBotConfig.class})
-//@EnableJpaRepositories("io.github.jnicog.discord.spanner.bot.repository")
-//@EntityScan("io.github.jnicog.discord.spanner.bot.model")
 public class DiscordSpannerBotApplication {
 
 	static void main(String[] args) {
