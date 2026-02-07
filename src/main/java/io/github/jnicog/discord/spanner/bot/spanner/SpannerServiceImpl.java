@@ -45,6 +45,17 @@ public class SpannerServiceImpl implements SpannerService {
     }
 
     @Override
+    public int getOrCreateSpannerCount(long userId, long channelId) {
+        SpannerEntity entity = spannerRepository.findByUserIdAndChannelId(userId, channelId)
+                .orElseGet(() -> {
+                    LOGGER.debug("Creating new spanner record for user {} in channel {}", userId, channelId);
+                    SpannerEntity newEntity = new SpannerEntity(userId, channelId);
+                    return spannerRepository.save(newEntity);
+                });
+        return entity.getSpannerCount();
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public int getTotalSpannerCount(long userId) {
         return spannerRepository.getTotalSpannerCountByUserId(userId);

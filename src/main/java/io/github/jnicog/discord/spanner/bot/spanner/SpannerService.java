@@ -24,6 +24,16 @@ public interface SpannerService {
     int getSpannerCount(long userId, long channelId);
 
     /**
+     * Gets the spanner count for a user in a specific channel,
+     * creating a new record with 0 spanners if one doesn't exist.
+     *
+     * @param userId    The Discord user ID
+     * @param channelId The Discord channel ID
+     * @return The spanner count (0 if newly created)
+     */
+    int getOrCreateSpannerCount(long userId, long channelId);
+
+    /**
      * Gets the total spanner count for a user across all channels.
      *
      * @param userId The Discord user ID

@@ -241,5 +241,23 @@ public class MessageFormatterService {
         }
         return unit;
     }
+
+    // ==================== Spanner Messages ====================
+
+    /**
+     * Formats the spanner count message for a self-query.
+     */
+    public String formatSelfSpannerCount(int spannerCount) {
+        String timesWord = spannerCount == 1 ? "time" : "times";
+        return String.format("You have spannered **%d** %s", spannerCount, timesWord);
+    }
+
+    /**
+     * Formats the spanner count message when querying another user.
+     */
+    public String formatUserSpannerCount(long targetUserId, int spannerCount) {
+        String timesWord = spannerCount == 1 ? "time" : "times";
+        return String.format("<@%d> has spannered **%d** %s", targetUserId, spannerCount, timesWord);
+    }
 }
 
