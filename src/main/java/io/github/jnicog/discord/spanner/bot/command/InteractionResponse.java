@@ -1,5 +1,7 @@
 package io.github.jnicog.discord.spanner.bot.command;
 
+import io.github.jnicog.discord.spanner.bot.leaderboard.LeaderboardPage;
+
 /**
  * Represents an interaction response that is completely decoupled from JDA.
  * The dispatcher translates this into the appropriate JDA call.
@@ -12,6 +14,7 @@ public sealed interface InteractionResponse permits
         InteractionResponse.UpdateOriginalMessageAndClearComponents,
         InteractionResponse.EditButtonMessage,
         InteractionResponse.EditButtonMessageAndClearComponents,
+        InteractionResponse.LeaderboardEmbed,
         InteractionResponse.DeferReply,
         InteractionResponse.NoReply {
 
@@ -30,6 +33,11 @@ public sealed interface InteractionResponse permits
      * and clears all components (buttons). Uses editMessage() instead of hook.editOriginal().
      */
     record EditButtonMessageAndClearComponents(String content) implements InteractionResponse {}
+    /**
+     * Leaderboard embed with pagination reactions.
+     * The dispatcher will send an embed and add reaction emojis.
+     */
+    record LeaderboardEmbed(LeaderboardPage page, long ownerId) implements InteractionResponse {}
     record DeferReply(boolean ephemeral) implements InteractionResponse {}
     record NoReply() implements InteractionResponse {}
 }

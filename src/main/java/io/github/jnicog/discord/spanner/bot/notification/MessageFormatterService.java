@@ -259,5 +259,29 @@ public class MessageFormatterService {
         String timesWord = spannerCount == 1 ? "time" : "times";
         return String.format("<@%d> has spannered **%d** %s", targetUserId, spannerCount, timesWord);
     }
+
+    // ==================== Leaderboard Messages ====================
+
+    /**
+     * Formats a leaderboard entry.
+     */
+    public String formatLeaderboardEntry(int rank, long userId, int spannerCount) {
+        String spannerWord = spannerCount == 1 ? "spanner" : "spanners";
+        return String.format("%d. <@%d>: %d %s", rank, userId, spannerCount, spannerWord);
+    }
+
+    /**
+     * Formats the leaderboard footer showing pagination info.
+     */
+    public String formatLeaderboardFooter(int currentPage, int totalPages) {
+        return String.format("Page %d of %d", currentPage, totalPages);
+    }
+
+    /**
+     * Formats an empty leaderboard message.
+     */
+    public String formatEmptyLeaderboard() {
+        return "No spanner records found for this channel.";
+    }
 }
 

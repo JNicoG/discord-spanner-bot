@@ -10,9 +10,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Import({TestContainersConfig.class, TestConfig.class})
 @ActiveProfiles("test")
 class SpannerServiceIntegrationTest {
@@ -37,7 +37,7 @@ class SpannerServiceIntegrationTest {
 
         int count = spannerService.getSpannerCount(USER_ID, CHANNEL_ID);
 
-        assertThat(count).isEqualTo(1);
+        assertEquals(1, count);
     }
 
     @Test
@@ -48,14 +48,14 @@ class SpannerServiceIntegrationTest {
 
         int count = spannerService.getSpannerCount(USER_ID, CHANNEL_ID);
 
-        assertThat(count).isEqualTo(3);
+        assertEquals(3, count);
     }
 
     @Test
     void shouldReturnZeroForUserWithNoSpanners() {
         int count = spannerService.getSpannerCount(USER_ID, CHANNEL_ID);
 
-        assertThat(count).isZero();
+        assertEquals(0, count);
     }
 
     @Test
@@ -70,7 +70,7 @@ class SpannerServiceIntegrationTest {
 
         int totalCount = spannerService.getTotalSpannerCount(USER_ID);
 
-        assertThat(totalCount).isEqualTo(5);
+        assertEquals(5, totalCount);
     }
 }
 
