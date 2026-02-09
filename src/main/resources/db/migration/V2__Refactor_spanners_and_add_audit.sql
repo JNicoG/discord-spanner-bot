@@ -40,4 +40,10 @@ CREATE INDEX idx_audit_event_channel_occurred ON audit_event(channel_id, occurre
 CREATE INDEX idx_audit_event_data ON audit_event USING GIN (event_data);
 
 COMMENT ON TABLE spanner IS 'Tracks spanner counts for users per channel';
+
 COMMENT ON TABLE audit_event IS 'Audit trail of all events that occur in channels';
+COMMENT ON COLUMN audit_event.channel_id IS 'Discord channel ID where the event occurred';
+COMMENT ON COLUMN audit_event.user_id IS 'Discord user ID associated with the event (if applicable)';
+COMMENT ON COLUMN audit_event.event_type IS 'Type/category of the event';
+COMMENT ON COLUMN audit_event.event_data IS 'Type-specific event data stored as JSON';
+COMMENT ON COLUMN audit_event.occurred_at IS 'Timestamp when the event occurred';
