@@ -9,7 +9,7 @@ import org.testcontainers.utility.DockerImageName;
 /**
  * Test configuration that provides a PostgreSQL Testcontainer for integration tests.
  */
-@TestConfiguration(proxyBeanMethods = false)
+@TestConfiguration
 public class TestContainersConfig {
 
     @Bean
