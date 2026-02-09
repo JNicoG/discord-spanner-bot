@@ -1,7 +1,9 @@
 package io.github.jnicog.discord.spanner.bot.leaderboard;
 
+import io.github.jnicog.discord.spanner.bot.event.leaderboard.LeaderboardSessionTimeoutEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 
@@ -11,11 +13,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
-import java.util.function.Consumer;
 
 /**
  * Manages active leaderboard sessions.
  * Handles session creation, lookup, and timeout scheduling.
+ * Publishes {@link LeaderboardSessionTimeoutEvent} when a session times out.
  */
 @Component
 public class LeaderboardSessionManager {
@@ -25,18 +27,12 @@ public class LeaderboardSessionManager {
 
     private final Map<Long, LeaderboardSession> sessionsByMessageId = new ConcurrentHashMap<>();
     private final TaskScheduler taskScheduler;
+    private final ApplicationEventPublisher eventPublisher;
 
-    private Consumer<LeaderboardSession> timeoutCallback;
-
-    public LeaderboardSessionManager(TaskScheduler taskScheduler) {
+    public LeaderboardSessionManager(TaskScheduler taskScheduler,
+                                      ApplicationEventPublisher eventPublisher) {
         this.taskScheduler = taskScheduler;
-    }
-
-    /**
-     * Sets the callback to be invoked when a session times out.
-     */
-    public void setTimeoutCallback(Consumer<LeaderboardSession> callback) {
-        this.timeoutCallback = callback;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -103,10 +99,7 @@ public class LeaderboardSessionManager {
     private void handleTimeout(LeaderboardSession session) {
         LOGGER.debug("Leaderboard session {} timed out", session.getMessageId());
         sessionsByMessageId.remove(session.getMessageId());
-
-        if (timeoutCallback != null) {
-            timeoutCallback.accept(session);
-        }
+        eventPublisher.publishEvent(new LeaderboardSessionTimeoutEvent(session));
     }
 }
 
