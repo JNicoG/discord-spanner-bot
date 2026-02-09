@@ -1,14 +1,9 @@
 package io.github.jnicog.discord.spanner.bot.repository;
 
-import io.github.jnicog.discord.spanner.bot.TestConfig;
-import io.github.jnicog.discord.spanner.bot.TestContainersConfig;
+import io.github.jnicog.discord.spanner.bot.AbstractIntegrationTest;
 import io.github.jnicog.discord.spanner.bot.repository.entity.SpannerEntity;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
 
@@ -16,10 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@Import({TestContainersConfig.class, TestConfig.class})
-@ActiveProfiles("test")
-class SpannerRepositoryTest {
+class SpannerRepositoryTest extends AbstractIntegrationTest {
 
     @Autowired
     private SpannerRepository spannerRepository;
@@ -28,11 +20,6 @@ class SpannerRepositoryTest {
     private static final Long USER_ID_2 = 987654321L;
     private static final Long CHANNEL_ID_1 = 111111111L;
     private static final Long CHANNEL_ID_2 = 222222222L;
-
-    @BeforeEach
-    void setUp() {
-        spannerRepository.deleteAll();
-    }
 
     @Test
     void shouldSaveAndFindSpannerEntity() {
@@ -132,4 +119,3 @@ class SpannerRepositoryTest {
         assertFalse(spannerRepository.existsByUserIdAndChannelId(USER_ID_2, CHANNEL_ID_1));
     }
 }
-

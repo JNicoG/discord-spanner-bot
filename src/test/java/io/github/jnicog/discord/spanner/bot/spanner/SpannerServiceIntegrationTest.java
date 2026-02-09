@@ -1,21 +1,13 @@
 package io.github.jnicog.discord.spanner.bot.spanner;
 
-import io.github.jnicog.discord.spanner.bot.TestConfig;
-import io.github.jnicog.discord.spanner.bot.TestContainersConfig;
+import io.github.jnicog.discord.spanner.bot.AbstractIntegrationTest;
 import io.github.jnicog.discord.spanner.bot.repository.SpannerRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@Import({TestContainersConfig.class, TestConfig.class})
-@ActiveProfiles("test")
-class SpannerServiceIntegrationTest {
+class SpannerServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private SpannerService spannerService;
@@ -25,11 +17,6 @@ class SpannerServiceIntegrationTest {
 
     private static final long USER_ID = 123456789L;
     private static final long CHANNEL_ID = 111111111L;
-
-    @BeforeEach
-    void setUp() {
-        spannerRepository.deleteAll();
-    }
 
     @Test
     void shouldIncrementSpannerCountForNewUser() {
@@ -73,4 +60,3 @@ class SpannerServiceIntegrationTest {
         assertEquals(5, totalCount);
     }
 }
-
