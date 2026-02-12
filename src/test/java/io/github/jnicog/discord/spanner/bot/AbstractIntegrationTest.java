@@ -27,7 +27,4 @@ import org.springframework.test.context.ActiveProfiles;
 @Transactional
 public abstract class AbstractIntegrationTest {
 
-    @Autowired(required = false)
-    protected Flyway flyway;
-
 }

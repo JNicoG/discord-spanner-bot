@@ -1,0 +1,26 @@
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    container_name: spanner-bot-db
+    environment:
+      # Database credentials MUST be set via environment variables or .env file
+      # No defaults are provided - docker-compose will fail if variables are not set
+      POSTGRES_DB: ${SPANNER_BOT_DB_NAME}
+      POSTGRES_USER: ${SPANNER_BOT_DB_USERNAME}
+      POSTGRES_PASSWORD: ${SPANNER_BOT_DB_PASSWORD}
+    ports:
+      - "${SPANNER_BOT_DB_PORT}:5432"
+    volumes:
+      - spanner_bot_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SPANNER_BOT_DB_USERNAME} -d ${SPANNER_BOT_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  spanner_bot_data:
+    driver: local
