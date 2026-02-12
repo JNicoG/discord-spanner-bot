@@ -1,0 +1,31 @@
+@startuml
+title SpannerService - Class Diagram
+
+class SpannerService {
+  - spannerRepository: SpannerRepository
+  - leaderboardService: LeaderboardService
+  + getOrCreateSpannerCount(userId: long, channelId: long): int
+  + incrementSpanner(userId: long, channelId: long, delta: int): int
+  + setSpannerCount(userId: long, channelId: long, count: int): void
+  + getSpanner(userId: long, channelId: long): Spanner
+}
+
+class SpannerRepository {
+  + findByUserIdAndChannelId(userId: long, channelId: long): Optional<Spanner>
+  + save(spanner: Spanner): Spanner
+  + update(spanner: Spanner): Spanner
+}
+
+class Spanner {
+  + userId: long
+  + channelId: long
+  + spannerCount: int
+  + createdAt: Timestamp
+  + updatedAt: Timestamp
+}
+
+SpannerService --> SpannerRepository : uses
+SpannerService --> LeaderboardService : updates
+SpannerRepository --> Spanner : persists
+
+@enduml

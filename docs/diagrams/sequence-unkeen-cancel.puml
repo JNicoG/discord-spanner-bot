@@ -1,0 +1,30 @@
+@startuml
+actor User
+participant Discord
+participant Bot
+participant Controller
+participant SlashDispatcher
+participant UnkeenHandler
+participant CheckInService
+participant QueueService
+participant Repository
+participant Database
+
+User -> Discord: /unkeen
+Discord -> Bot: Deliver Command
+Bot -> Controller: receiveInteraction()
+Controller -> SlashDispatcher: dispatch()
+SlashDispatcher -> UnkeenHandler: handleCommand(context)
+UnkeenHandler -> CheckInService: hasActiveSession(channel)
+alt if user is participant
+  UnkeenHandler -> CheckInService: cancelAndGetRemainingUsers(channel, user)
+  CheckInService -> Repository: updateSession(...)
+  Repository -> Database: UPDATE checkin_session
+  UnkeenHandler -> QueueService: leaveQueue(user, channel)
+  UnkeenHandler -> Bot: respond with cancellation notice and updated queue
+else
+  UnkeenHandler -> QueueService: leaveQueue(user, channel)
+  UnkeenHandler -> Bot: respond with left-queue message
+end
+
+@enduml

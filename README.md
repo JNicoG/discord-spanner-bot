@@ -140,3 +140,53 @@ This deletes the Docker volume containing the DB data and restarts a fresh DB in
 - Unit tests do not require Docker.
 
 ---
+
+## Bot functionality
+
+The bot exposes the following commands (slash commands / interactions). Command handlers live under `src/main/java/.../command/handler`.
+
+- `/spanners [user_id]` — Query the spanner count for yourself or another user in the current channel. Example: `/spanners 123456789012345678`
+- `/keen` (alias `/k`) — Join the "keen" queue for an activity in the channel. The bot maintains a per-channel queue and will notify when a check-in or activity starts.
+- `/unkeen` — Leave the queue or cancel participation; if the user is in an active check-in session it may cancel the session for that user and update the queue.
+- `/keeners` — Show the current queue for the channel (list of user IDs) and the maximum queue size.
+- `/leaderboard` — Display a paginated leaderboard of spanner counts for users in the channel.
+
+Other interactions (buttons) are handled by button-specific handlers in `src/main/java/.../command/handler` (e.g. check-in buttons and cancel buttons).
+
+### Usage notes
+- Commands are implemented as slash commands and produce rich responses (events and messages) via the Discord API.
+- IDs are typically Discord snowflakes (longs). Where a command accepts a `user` argument, provide a numeric user ID.
+
+---
+
+## Project requirements
+
+- Java 25
+- Maven (you can use the bundled `./mvnw` wrapper)
+- Docker Desktop (for running test/local PostgreSQL)
+- Discord bot (token and appropriate guild permissions)
+
+---
+
+## Diagrams
+
+PlantUML sources are available under `docs/diagrams/`. You can render them with a PlantUML tool / plugin / extension.
+
+- `docs/diagrams/use-case.puml` — Use case diagram showing primary user interactions
+- `docs/diagrams/sequence-checkin.puml` — Sequence diagram for the /keen/check-in flow
+- `docs/diagrams/architecture.puml` — High-level architecture diagram (controllers -> handlers -> services -> repository -> DB)
+
+### Rendered architecture
+
+Below is the rendered high-level architecture diagram (SVG):
+
+![High-level architecture](docs/diagrams/architecture.svg)
+
+Example (render with PlantUML):
+
+```bash
+# render as PNG (if plantuml is installed)
+plantuml docs/diagrams/use-case.puml
+```
+
+---
