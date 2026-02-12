@@ -3,13 +3,15 @@ left to right direction
 actor User
 actor Admin
 rectangle "Discord Server" {
-  User --> (Join Queue)
-  User --> (Leave Queue)
-  User --> (View Leaderboard)
-  User --> (View Spanner Count)
-  User --> (Check-in / Cancel Check-in)
+    rectangle "Text Channel" {
+          User --> (Join Queue)
+          User --> (Leave Queue)
+          User --> (View Leaderboard)
+          User --> (View Spanner Count)
+          User --> (Check-in / Cancel Check-in)
 
-  Admin --> (Configure Bot)
-  Admin --> (View Audit Trail)
+          Admin --> (Configure Bot)
+          Admin --> (View Audit Trail)
+      }
 }
 @enduml

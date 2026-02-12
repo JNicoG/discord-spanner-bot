@@ -143,19 +143,26 @@ This deletes the Docker volume containing the DB data and restarts a fresh DB in
 
 ## Bot functionality
 
-The bot exposes the following commands (slash commands / interactions). Command handlers live under `src/main/java/.../command/handler`.
+The bot exposes the following slash commands:
 
-- `/spanners [user_id]` — Query the spanner count for yourself or another user in the current channel. Example: `/spanners 123456789012345678`
-- `/keen` (alias `/k`) — Join the "keen" queue for an activity in the channel. The bot maintains a per-channel queue and will notify when a check-in or activity starts.
-- `/unkeen` — Leave the queue or cancel participation; if the user is in an active check-in session it may cancel the session for that user and update the queue.
-- `/keeners` — Show the current queue for the channel (list of user IDs) and the maximum queue size.
+- `/spanners <user [optional]>` — Query the spanner count for yourself or another user in the current channel. Example: `/spanners @user` or just `/spanners` to check your own count.
+- `/keen` (alias `/k`) — Join the "keen" queue for an activity in the channel. The bot maintains a per-channel queue and will notify when a check-in starts.
+- `/unkeen` — Leave the queue; if the user is in an active check-in session it will cancel check-in and update the queue accordingly.
+- `/keeners` — Show the current queue for the channel and the maximum queue size.
 - `/leaderboard` — Display a paginated leaderboard of spanner counts for users in the channel.
 
-Other interactions (buttons) are handled by button-specific handlers in `src/main/java/.../command/handler` (e.g. check-in buttons and cancel buttons).
+### Check-in flow
+- `/keen` to join the queue
+- When the queue reaches maximum capacity, a check-in session starts.
+- Check-in or cancel using provided buttons
 
-### Usage notes
-- Commands are implemented as slash commands and produce rich responses (events and messages) via the Discord API.
-- IDs are typically Discord snowflakes (longs). Where a command accepts a `user` argument, provide a numeric user ID.
+### Spanner tracking
+- The bot tracks "spanners" per user and channel.
+- Spanners are awarded if a user actively leaves the queue or fails to check in during a check-in session.
+
+### Timeouts
+- A user is removed from the queue 1 hour after joining if a check-in session has not started.
+- Check-in sessions have a 5-minute window once started.
 
 ---
 
@@ -173,7 +180,6 @@ Other interactions (buttons) are handled by button-specific handlers in `src/mai
 PlantUML sources are available under `docs/diagrams/`. You can render them with a PlantUML tool / plugin / extension.
 
 - `docs/diagrams/use-case.puml` — Use case diagram showing primary user interactions
-- `docs/diagrams/sequence-checkin.puml` — Sequence diagram for the /keen/check-in flow
 - `docs/diagrams/architecture.puml` — High-level architecture diagram (controllers -> handlers -> services -> repository -> DB)
 
 ### Rendered architecture
@@ -181,6 +187,8 @@ PlantUML sources are available under `docs/diagrams/`. You can render them with 
 Below is the rendered high-level architecture diagram (SVG):
 
 ![High-level architecture](docs/diagrams/architecture.svg)
+
+![Use case diagram](docs/diagrams/use-case.svg)
 
 Example (render with PlantUML):
 
