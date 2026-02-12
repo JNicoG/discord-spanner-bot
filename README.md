@@ -6,13 +6,37 @@ This README is a project-root overview and developer quickstart. For Docker-spec
 
 ---
 
+## Bot functionality
+
+The bot exposes the following slash commands:
+
+- `/spanners <user [optional]>` — Query the spanner count for yourself or another user in the current channel. Example: `/spanners @user` or just `/spanners` to check your own count.
+- `/keen` (alias `/k`) — Join the "keen" queue for an activity in the channel. The bot maintains a per-channel queue and will notify when a check-in starts.
+- `/unkeen` — Leave the queue; cancels an active check-in session.
+- `/keeners` — Show the current queue for the channel and the maximum queue size.
+- `/leaderboard` — Display a paginated leaderboard of spanner counts for users in the channel.
+
+### Check-in flow
+- `/keen` to join the queue.
+- When the queue reaches maximum capacity, a check-in session starts.
+- Check-in or cancel using provided buttons.
+
+### Spanner tracking
+- The bot tracks "spanners" per user and channel.
+- Spanners are awarded if a user actively leaves the queue or fails to check in during a check-in session.
+
+### Timeouts
+- A user is removed from the queue 1 hour after joining if a check-in session has not started.
+- Check-in sessions have a 5-minute window once started.
+
+---
+
 ## Quick overview
 
 - Language: Java (Spring Boot)
 - Build: Maven
-- Database: PostgreSQL (local, via Docker Compose for development)
-- Migrations: Flyway (managed by the application)
-
+- Database: PostgreSQL
+- Migrations: Flyway
 ---
 
 ## Prerequisites
@@ -49,7 +73,7 @@ This quickstart assumes you have Docker and the project prerequisites from above
 - Create `docker/.env` (copy `docker/.env.example`) and fill in the database values, for example:
 
 ```env
-SPANNER_BOT_DB_NAME=spanner_bot_db
+SPANNER_BOT_DB_NAME=db_name
 SPANNER_BOT_DB_USERNAME=username
 SPANNER_BOT_DB_PASSWORD=password
 SPANNER_BOT_DB_PORT=5432
@@ -76,18 +100,18 @@ The scripts will load `docker/.env` and validate required variables.
 
 PowerShell example:
 ```powershell
-$env:SPANNER_BOT_DB_URL = "jdbc:postgresql://localhost:5432/spanner_bot"
-$env:SPANNER_BOT_DB_USERNAME = "spanner_bot"
-$env:SPANNER_BOT_DB_PASSWORD = "super_secret_local_password"
-$env:SPANNER_BOT_TOKEN = "<your-discord-bot-token>"
+$env:SPANNER_BOT_DB_URL = "jdbc:postgresql://localhost:5432/db_name"
+$env:SPANNER_BOT_DB_USERNAME = "username"
+$env:SPANNER_BOT_DB_PASSWORD = "password"
+$env:SPANNER_BOT_TOKEN = "token"
 ```
 
 Bash example:
 ```bash
-export SPANNER_BOT_DB_URL="jdbc:postgresql://localhost:5432/spanner_bot"
-export SPANNER_BOT_DB_USERNAME="spanner_bot"
-export SPANNER_BOT_DB_PASSWORD="super_secret_local_password"
-export SPANNER_BOT_TOKEN="<your-discord-bot-token>"
+export SPANNER_BOT_DB_URL="jdbc:postgresql://localhost:5432/db_name"
+export SPANNER_BOT_DB_USERNAME="username"
+export SPANNER_BOT_DB_PASSWORD="password"
+export SPANNER_BOT_TOKEN="token"
 ```
 
 4. Run the app from source
@@ -103,14 +127,14 @@ export SPANNER_BOT_TOKEN="<your-discord-bot-token>"
 ```bash
 ./mvnw clean package -DskipTests
 export SPANNER_BOT_VERSION_NUMBER="3.0.0"   # match the built artifact version
-java -jar target/discord-spanner-bot-${SPANNER_BOT_VERSION_NUMBER}-SNAPSHOT.jar
+java -jar target/discord-spanner-bot-${SPANNER_BOT_VERSION_NUMBER}-SNAPSHOT.jar   # match the built artifact name
 ```
 
 Once the application starts it will connect to the DB and Flyway will run migrations automatically.
 
 5. Resetting the database
 
-If you need to wipe data and reinitialize the DB (for example after changing credentials or migrations), run the reset script:
+If you need to wipe data and reinitialize the DB (for example after migrations), run the reset script:
 
 ```bash
 # Windows
@@ -130,7 +154,7 @@ This deletes the Docker volume containing the DB data and restarts a fresh DB in
 
 - Flyway migrations live in `src/main/resources/db/migration/` and are executed by the application on startup.
 - If you want to pre-populate data when the container starts, prefer Flyway callbacks (SQL scripts under `db/migration` or Flyway `afterMigrate` callbacks) so Flyway remains the single source of truth.
-- If you do use Docker `init-scripts` for fast local initialization, be aware that these run only on first container initialization (empty volume) and may conflict with Flyway unless you use Flyway baseline (`spring.flyway.baseline-on-migrate=true`) or ensure the init-scripts create the same state as Flyway expects.
+- If you do use Docker `init-scripts` for fast local initialization, be aware that these run only on first container initialization (empty volume) and may conflict with Flyway.
 
 ---
 
@@ -138,31 +162,6 @@ This deletes the Docker volume containing the DB data and restarts a fresh DB in
 
 - The test suite uses Testcontainers for integration tests that require a database; the test container provides its own DB credentials and does not rely on your local `docker/.env` values.
 - Unit tests do not require Docker.
-
----
-
-## Bot functionality
-
-The bot exposes the following slash commands:
-
-- `/spanners <user [optional]>` — Query the spanner count for yourself or another user in the current channel. Example: `/spanners @user` or just `/spanners` to check your own count.
-- `/keen` (alias `/k`) — Join the "keen" queue for an activity in the channel. The bot maintains a per-channel queue and will notify when a check-in starts.
-- `/unkeen` — Leave the queue; if the user is in an active check-in session it will cancel check-in and update the queue accordingly.
-- `/keeners` — Show the current queue for the channel and the maximum queue size.
-- `/leaderboard` — Display a paginated leaderboard of spanner counts for users in the channel.
-
-### Check-in flow
-- `/keen` to join the queue
-- When the queue reaches maximum capacity, a check-in session starts.
-- Check-in or cancel using provided buttons
-
-### Spanner tracking
-- The bot tracks "spanners" per user and channel.
-- Spanners are awarded if a user actively leaves the queue or fails to check in during a check-in session.
-
-### Timeouts
-- A user is removed from the queue 1 hour after joining if a check-in session has not started.
-- Check-in sessions have a 5-minute window once started.
 
 ---
 

@@ -1,3 +1,4 @@
+# Local development only.
 services:
   postgres:
     build:
@@ -5,8 +6,6 @@ services:
       dockerfile: Dockerfile.postgres
     container_name: spanner-bot-db
     environment:
-      # Database credentials MUST be set via environment variables or .env file
-      # No defaults are provided - docker-compose will fail if variables are not set
       POSTGRES_DB: ${SPANNER_BOT_DB_NAME}
       POSTGRES_USER: ${SPANNER_BOT_DB_USERNAME}
       POSTGRES_PASSWORD: ${SPANNER_BOT_DB_PASSWORD}
