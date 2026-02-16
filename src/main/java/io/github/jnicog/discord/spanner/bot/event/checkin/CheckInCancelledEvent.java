@@ -7,7 +7,7 @@ import io.github.jnicog.discord.spanner.bot.event.spanner.SpannerAwardingEvent;
 import java.util.Set;
 
 /**
- *  event for when a player cancels/spanners the check-in session.
+ * Event for when a player cancels/spanners the check-in session.
  * Uses JDA-free ButtonInteractionContext.
  */
 public class CheckInCancelledEvent extends AbstractCommandResult<ButtonInteractionContext> implements SpannerAwardingEvent {

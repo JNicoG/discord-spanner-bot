@@ -4,7 +4,7 @@ import io.github.jnicog.discord.spanner.bot.command.ButtonInteractionContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 /**
- *  event for when a player is already checked in.
+ * Event for when a player is already checked in.
  */
 public class PlayerAlreadyCheckedInEvent extends AbstractCommandResult<ButtonInteractionContext> {
 

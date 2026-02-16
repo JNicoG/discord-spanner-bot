@@ -4,7 +4,7 @@ import io.github.jnicog.discord.spanner.bot.command.SlashCommandContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 /**
- *  event for when a player is already in the queue.
+ * Event for when a player is already in the queue.
  */
 public class PlayerAlreadyQueuedEvent extends AbstractCommandResult<SlashCommandContext> {
 

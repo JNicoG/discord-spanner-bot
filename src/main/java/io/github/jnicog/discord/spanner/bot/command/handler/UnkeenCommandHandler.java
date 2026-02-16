@@ -18,8 +18,8 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- *  handler for the /unkeen command.
- * Uses SlashCommandContext and returns  events.
+ * Handler for the /unkeen command.
+ * Uses SlashCommandContext.
  * If there's an active check-in session and the user is a participant,
  * the session is cancelled and remaining users stay in queue.
  */

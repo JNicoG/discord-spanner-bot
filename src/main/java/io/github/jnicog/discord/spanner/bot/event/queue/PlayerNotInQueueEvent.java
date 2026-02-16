@@ -4,7 +4,7 @@ import io.github.jnicog.discord.spanner.bot.command.SlashCommandContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 /**
- *  event for when a player tries to leave but is not in the queue.
+ * Event for when a player tries to leave but is not in the queue.
  */
 public class PlayerNotInQueueEvent extends AbstractCommandResult<SlashCommandContext> {
 

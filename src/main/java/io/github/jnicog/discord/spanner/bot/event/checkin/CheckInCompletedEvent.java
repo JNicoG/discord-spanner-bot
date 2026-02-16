@@ -6,7 +6,7 @@ import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 import java.util.Map;
 
 /**
- *  event for when all players have completed check-in.
+ * Event for when all players have completed check-in.
  * Uses JDA-free ButtonInteractionContext.
  */
 public class CheckInCompletedEvent extends AbstractCommandResult<ButtonInteractionContext> {

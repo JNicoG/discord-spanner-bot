@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
- *  handler for the check-in cancel/spanner button.
+ * Handler for the check-in cancel/spanner button.
  * Cancels the check-in session. The cancelling user is removed from the queue,
  * while remaining users stay in the queue.
  */

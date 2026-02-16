@@ -7,7 +7,7 @@ import io.github.jnicog.discord.spanner.bot.event.spanner.SpannerAwardingEvent;
 import java.util.Set;
 
 /**
- *  event for when a player leaves the queue.
+ * Event for when a player leaves the queue.
  */
 public class PlayerLeftQueueEvent extends AbstractCommandResult<SlashCommandContext> implements SpannerAwardingEvent {
 

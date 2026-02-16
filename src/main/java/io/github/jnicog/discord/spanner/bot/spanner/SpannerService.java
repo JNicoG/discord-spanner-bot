@@ -2,7 +2,6 @@ package io.github.jnicog.discord.spanner.bot.spanner;
 
 /**
  * Service interface for spanner operations.
- * Provides a decoupled abstraction over the repository layer.
  */
 public interface SpannerService {
 

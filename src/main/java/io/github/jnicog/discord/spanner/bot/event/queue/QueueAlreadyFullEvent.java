@@ -4,7 +4,7 @@ import io.github.jnicog.discord.spanner.bot.command.SlashCommandContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 /**
- *  event for when the queue is already full.
+ * Event for when the queue is already full.
  */
 public class QueueAlreadyFullEvent extends AbstractCommandResult<SlashCommandContext> {
 

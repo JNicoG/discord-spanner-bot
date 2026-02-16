@@ -6,7 +6,7 @@ import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 import java.util.Set;
 
 /**
- *  event for when a player successfully joins the queue.
+ * Event for when a player successfully joins the queue.
  */
 public class PlayerJoinedQueueEvent extends AbstractCommandResult<SlashCommandContext> {
 

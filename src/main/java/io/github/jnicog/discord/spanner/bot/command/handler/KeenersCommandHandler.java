@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 import java.util.Set;
 
 /**
- *  handler for the /keeners command.
- * Uses SlashCommandContext and returns  events.
+ * Handler for the /keeners command.
+ * Uses SlashCommandContext.
  */
 @Component
 public class KeenersCommandHandler implements SlashCommandHandler {

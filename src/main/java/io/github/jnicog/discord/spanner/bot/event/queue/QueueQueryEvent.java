@@ -6,7 +6,7 @@ import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 import java.util.Set;
 
 /**
- *  event for querying the current queue state.
+ * Event for querying the current queue state.
  */
 public class QueueQueryEvent extends AbstractCommandResult<SlashCommandContext> {
 

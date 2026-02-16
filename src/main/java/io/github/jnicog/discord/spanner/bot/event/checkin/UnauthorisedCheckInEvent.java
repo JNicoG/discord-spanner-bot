@@ -4,7 +4,7 @@ import io.github.jnicog.discord.spanner.bot.command.ButtonInteractionContext;
 import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 
 /**
- *  event for when a player tries to check in without authorisation.
+ * Event for when a player tries to check in without authorisation.
  */
 public class UnauthorisedCheckInEvent extends AbstractCommandResult<ButtonInteractionContext> {
 

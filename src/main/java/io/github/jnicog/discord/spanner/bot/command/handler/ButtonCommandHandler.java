@@ -6,7 +6,7 @@ import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 import java.util.List;
 
 /**
- *  handler interface that receives JDA-free context.
+ * Handler interface that receives JDA-free context.
  * No responder is passed - responses are handled by the dispatcher.
  */
 public interface ButtonCommandHandler {

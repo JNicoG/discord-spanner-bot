@@ -7,7 +7,7 @@ import io.github.jnicog.discord.spanner.bot.event.spanner.SpannerAwardingEvent;
 import java.util.Set;
 
 /**
- *  event for when a player uses /unkeen during an active check-in session.
+ * Event for when a player uses /unkeen during an active check-in session.
  * This cancels the session and the user receives a spanner.
  */
 public class UnkeenDuringCheckInEvent extends AbstractCommandResult<SlashCommandContext> implements SpannerAwardingEvent {

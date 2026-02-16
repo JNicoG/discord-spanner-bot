@@ -18,8 +18,8 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 
 /**
- *  handler for the check-in button.
- * Uses ButtonInteractionContext and returns  events.
+ * Handler for the check-in button.
+ * Uses ButtonInteractionContext.
  */
 @Component
 public class CheckInButtonHandler implements ButtonCommandHandler {
