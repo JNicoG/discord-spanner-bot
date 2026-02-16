@@ -38,6 +38,7 @@ if defined missing_vars (
     echo   $env:SPANNER_BOT_DB_PORT = "5432"
     echo.
     echo Or create a .env file in the docker directory. See .env.example for template.
+    pause
     exit /b 1
 )
 
@@ -58,22 +59,27 @@ if /i "%confirm%"=="y" (
 
     echo.
     echo Waiting for database to be ready...
-    :wait_loop
-    docker exec spanner-bot-db pg_isready -U %SPANNER_BOT_DB_USERNAME% -d %SPANNER_BOT_DB_NAME% >nul 2>&1
-    if errorlevel 1 (
-        timeout /t 1 /nobreak >nul
-        goto wait_loop
-    )
-
-    echo.
-    echo Database reset complete!
-    echo.
-    echo Connection details:
-    echo   Host:     localhost
-    echo   Port:     %SPANNER_BOT_DB_PORT%
-    echo   Database: %SPANNER_BOT_DB_NAME%
-    echo   Username: %SPANNER_BOT_DB_USERNAME%
-    echo   Password: (hidden)
 ) else (
     echo Cancelled.
+    goto :end_reset
 )
+
+:wait_loop
+docker exec spanner-bot-db pg_isready -U %SPANNER_BOT_DB_USERNAME% -d %SPANNER_BOT_DB_NAME% >nul 2>&1
+if errorlevel 1 (
+    timeout /t 1 /nobreak >nul
+    goto wait_loop
+)
+
+echo.
+echo Database reset complete!
+echo.
+echo Connection details:
+echo   Host:     localhost
+echo   Port:     %SPANNER_BOT_DB_PORT%
+echo   Database: %SPANNER_BOT_DB_NAME%
+echo   Username: %SPANNER_BOT_DB_USERNAME%
+echo   Password: (hidden)
+
+:end_reset
+pause

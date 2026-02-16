@@ -38,6 +38,7 @@ if defined missing_vars (
     echo   $env:SPANNER_BOT_DB_PORT = "5432"
     echo.
     echo Or create a .env file in the docker directory. See .env.example for template.
+    pause
     exit /b 1
 )
 
@@ -64,3 +65,4 @@ echo   Username: %SPANNER_BOT_DB_USERNAME%
 echo   Password: (hidden)
 echo.
 echo JDBC URL: jdbc:postgresql://localhost:%SPANNER_BOT_DB_PORT%/%SPANNER_BOT_DB_NAME%
+pause

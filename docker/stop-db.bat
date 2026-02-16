@@ -9,3 +9,4 @@ echo.
 echo NOTE: Database data is preserved. To completely reset and remove all data,
 echo       use reset-db.bat instead.
 
+pause
