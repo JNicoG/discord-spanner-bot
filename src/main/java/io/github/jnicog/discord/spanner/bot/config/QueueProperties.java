@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
  * TODO: Consider giving each channel queue the option to modify the queue settings
  */
 @Configuration
-@ConfigurationProperties(prefix = "discord.queue")
+@ConfigurationProperties(prefix = "spanner.bot.queue")
 public class QueueProperties {
     /**
      * Maximum number of players allowed in a queue.

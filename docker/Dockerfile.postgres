@@ -1,0 +1,9 @@
+FROM postgres:17-alpine
+
+# Expose PostgreSQL port
+EXPOSE 5432
+
+# Health check
+# Note: The ${POSTGRES_USER} and ${POSTGRES_DB} variables are set by docker-compose.yml
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
+    CMD pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} || exit 1

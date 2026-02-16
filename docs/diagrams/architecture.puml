@@ -1,0 +1,35 @@
+@startuml
+skinparam componentStyle rectangle
+
+title Discord Spanner Bot — High Level Architecture
+
+package "Bot Application" {
+  component "DiscordEventController" as Controller
+  component "SlashCommandDispatcher" as SlashDispatcher
+  component "ButtonDispatcher" as ButtonDispatcher
+  component "Command Handlers\n(e.g. Keen, Spanners, Unkeen, Leaderboard)" as CommandHandlers
+  component "Services\n(QueueService, SpannerService, CheckInService, LeaderboardService, AuditService)" as Services
+  component "Repositories\n(SpannerRepository, AuditRepository)" as Repository
+  component "LeaderboardReactionDispatcher" as LeaderboardReactionDispatcher
+  component "NotificationService" as NotificationService
+  component "MessageFormatterService" as MessageFormatter
+  component "Message Gateway / InteractionResponse" as MessageGateway
+}
+
+database "PostgreSQL" as PostgresDB
+
+Controller --> SlashDispatcher : route slash commands
+Controller --> ButtonDispatcher : route button interactions
+Controller --> LeaderboardReactionDispatcher : route leaderboard reaction interactions
+SlashDispatcher --> CommandHandlers : dispatch to handler
+ButtonDispatcher --> CommandHandlers : dispatch to handler
+LeaderboardReactionDispatcher --> CommandHandlers : dispatch to handler
+CommandHandlers --> Services : call domain services
+Services --> Repository : persist/read data
+Repository --> PostgresDB : SQL/ORM
+
+Services --> NotificationService : publish events
+MessageFormatter --> NotificationService : format messages
+NotificationService --> MessageGateway : send responses
+
+@enduml
