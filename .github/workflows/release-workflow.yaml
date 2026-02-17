@@ -13,6 +13,7 @@ permissions:
 jobs:
   prepare-release:
     runs-on: ubuntu-latest
+    if: github.event.head_commit.author.name != 'GitHub Action'
     steps:
       - name: Checkout code with release token
         uses: actions/checkout@v5
@@ -70,7 +71,15 @@ jobs:
           git push
 
       - name: Build with Maven
-        run: mvn -B package
+        run: mvn -B package -DskipTests
+
+      - name: Deploy to Heroku
+        uses: akhileshns/heroku-deploy@v3.14.15
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: ${{secrets.HEROKU_APP_NAME}}
+          heroku_email: ${{vars.HEROKU_EMAIL}}
+          branch: "main"
 
       - name: Deploy to GitHub Packages
         run: mvn deploy -DskipTests
