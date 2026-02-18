@@ -11,9 +11,13 @@ permissions:
   pull-requests: write
 
 jobs:
-  prepare-release:
+  create-release:
     runs-on: ubuntu-latest
     if: github.event.head_commit.author.name != 'GitHub Action'
+    outputs:
+      release_version: ${{ steps.extract_version.outputs.release_version }}
+      next_version: ${{ steps.extract_version.outputs.next_version }}
+      release_tag: ${{ steps.extract_version.outputs.release_tag }}
     steps:
       - name: Checkout code with release token
         uses: actions/checkout@v5
@@ -42,36 +46,71 @@ jobs:
           
           # Remove -SNAPSHOT if present
           RELEASE_VERSION=${CURRENT_VERSION%-SNAPSHOT}
-          echo "Release version: $RELEASE_VERSION"
-          echo "release_version=$RELEASE_VERSION" >> $GITHUB_OUTPUT
-          
-          # Extract artifactId
           ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
-          echo "Artifact ID: $ARTIFACT_ID"
-          echo "artifact_id=$ARTIFACT_ID" >> $GITHUB_OUTPUT
 
-      - name: Update to release version and fix repository URLs
-        run: |
-          mvn versions:set -DnewVersion=${{ steps.extract_version.outputs.release_version }} -DgenerateBackupPoms=false
+          IFS='.' read -r -a VERSION_PARTS <<< "$RELEASE_VERSION"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          PATCH=$((PATCH + 1))
+          NEXT_VERSION="${MAJOR}.${MINOR}.${PATCH}-SNAPSHOT"
           
-          # Replace repository placeholders if they exist
-          if grep -q '\${github.repository}' pom.xml; then
-            sed -i "s|\${github.repository}|${{ github.repository }}|g" pom.xml
-          fi
+          # Export to Job Outputs
+          echo "release_version=$RELEASE_VERSION" >> $GITHUB_OUTPUT
+          echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          echo "release_tag=${ARTIFACT_ID}-v${RELEASE_VERSION}" >> $GITHUB_OUTPUT
 
-      - name: Commit release version
+      - name: Update POM to release version
+        run: mvn versions:set -DnewVersion=${{ steps.extract_version.outputs.release_version }} -DgenerateBackupPoms=false
+
+      - name: Commit and Tag Release
         run: |
-          # Set remote URL with token for authentication
-          git remote set-url origin https://x-access-token:${{ secrets.RELEASE_TOKEN }}@github.com/${{ github.repository }}.git
-          
           git add pom.xml
           git commit -m "Release version ${{ steps.extract_version.outputs.release_version }}"
-          git tag ${{ steps.extract_version.outputs.artifact_id }}-v${{ steps.extract_version.outputs.release_version }}
-          git push origin ${{ steps.extract_version.outputs.artifact_id }}-v${{ steps.extract_version.outputs.release_version }}
-          git push
+          git tag ${{ steps.extract_version.outputs.release_tag }}
+          git push origin ${{ steps.extract_version.outputs.release_tag }}
+          git push origin HEAD:main
 
-      - name: Build with Maven
-        run: mvn -B package -DskipTests
+  deploy-github-packages:
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Tagged Release
+        uses: actions/checkout@v5
+        with:
+          ref: refs/tags/${{ needs.create-release.outputs.release_tag }}
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'zulu'
+          cache: maven
+
+      - name: Deploy to GitHub Packages
+        run: mvn deploy -DskipTests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2.5.0
+        with:
+          tag_name: ${{ needs.create-release.outputs.release_tag }}
+          name: Release v${{ needs.create-release.outputs.release_version }}
+          draft: false
+          prerelease: false
+          files: target/*.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-heroku:
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Tagged Release
+        uses: actions/checkout@v5
+        with:
+          ref: refs/tags/${{ needs.create-release.outputs.release_tag }}
 
       # Manually install Heroku CLI for Ubuntu 24.04 (latest)
       - name: Install Heroku CLI
@@ -85,43 +124,33 @@ jobs:
           heroku_email: ${{secrets.HEROKU_EMAIL}}
           branch: "main"
 
-      - name: Deploy to GitHub Packages
-        run: mvn deploy -DskipTests
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  prepare-next-dev:
+    needs: [create-release, deploy-github-packages, deploy-heroku]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
 
-      - name: Calculate next development version (patch increment only)
-        id: next_version
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'zulu'
+          cache: maven
+
+      - name: Configure Git
         run: |
-          # Get the components of the version
-          IFS='.' read -r -a VERSION_PARTS <<< "${{ steps.extract_version.outputs.release_version }}"
-          MAJOR=${VERSION_PARTS[0]}
-          MINOR=${VERSION_PARTS[1]}
-          PATCH=${VERSION_PARTS[2]}
-          
-          PATCH=$((PATCH + 1))
-          
-          NEXT_VERSION="${MAJOR}.${MINOR}.${PATCH}-SNAPSHOT"
-          echo "Next development version: $NEXT_VERSION"
-          echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
 
       - name: Update to next development version
-        run: |
-          mvn versions:set -DnewVersion=${{ steps.next_version.outputs.next_version }} -DgenerateBackupPoms=false
+        run: mvn versions:set -DnewVersion=${{ needs.create-release.outputs.next_version }} -DgenerateBackupPoms=false
 
       - name: Commit next development version
         run: |
           git add pom.xml
-          git commit -m "Prepare for next development iteration ${{ steps.next_version.outputs.next_version }}"
-          git push
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ steps.extract_version.outputs.artifact_id }}-v${{ steps.extract_version.outputs.release_version }}
-          name: Release v${{ steps.extract_version.outputs.release_version }}
-          draft: false
-          prerelease: false
-          files: target/*.jar
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          git commit -m "Prepare for next development iteration ${{ needs.create-release.outputs.next_version }}"
+          git push origin HEAD:main
