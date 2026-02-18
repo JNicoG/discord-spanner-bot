@@ -61,14 +61,14 @@ jobs:
           echo "release_tag=${ARTIFACT_ID}-v${RELEASE_VERSION}" >> $GITHUB_OUTPUT
 
       - name: Update POM to release version
-        run: mvn versions:set -DnewVersion=${{ steps.extract.outputs.release_version }} -DgenerateBackupPoms=false
+        run: mvn versions:set -DnewVersion=${{ steps.extract_version.outputs.release_version }} -DgenerateBackupPoms=false
 
       - name: Commit and Tag Release
         run: |
           git add pom.xml
-          git commit -m "Release version ${{ steps.extract.outputs.release_version }}"
-          git tag ${{ steps.extract.outputs.release_tag }}
-          git push origin ${{ steps.extract.outputs.release_tag }}
+          git commit -m "Release version ${{ steps.extract_version.outputs.release_version }}"
+          git tag ${{ steps.extract_version.outputs.release_tag }}
+          git push origin ${{ steps.extract_version.outputs.release_tag }}
           git push origin HEAD:main
 
   deploy-github-packages:
@@ -104,7 +104,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   deploy-heroku:
-    needs: build
+    needs: create-release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Tagged Release
@@ -125,7 +125,7 @@ jobs:
           branch: "main"
 
   prepare-next-dev:
-    needs: [create-release, build, deploy-github-packages, deploy-heroku]
+    needs: [create-release, deploy-github-packages, deploy-heroku]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout latest main
