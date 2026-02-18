@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-  packages: write
   pull-requests: write
 
 jobs:
@@ -71,7 +70,7 @@ jobs:
           git push origin ${{ steps.extract_version.outputs.release_tag }}
           git push origin HEAD:main
 
-  deploy-github-packages:
+  create-github-release:
     needs: create-release
     runs-on: ubuntu-latest
     steps:
@@ -87,10 +86,8 @@ jobs:
           distribution: 'zulu'
           cache: maven
 
-      - name: Deploy to GitHub Packages
-        run: mvn deploy -DskipTests
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build executable JAR
+        run: mvn -B package -DskipTests
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2.5.0
@@ -125,7 +122,7 @@ jobs:
           branch: "HEAD"
 
   prepare-next-dev:
-    needs: [create-release, deploy-github-packages, deploy-heroku]
+    needs: [create-release, create-github-release, deploy-heroku]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout latest main
