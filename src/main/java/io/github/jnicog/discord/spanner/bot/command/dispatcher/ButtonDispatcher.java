@@ -41,7 +41,15 @@ public class ButtonDispatcher extends ListenerAdapter {
         LOGGER.debug("Received button interaction: {} by {} at {}",
                 event.getComponentId(), event.getUser().getAsTag(), event.getChannelId());
 
-        ButtonCommandHandler handler = handlers.get(event.getComponentId());
+        String componentId = event.getComponentId();
+        ButtonCommandHandler handler = handlers.get(componentId);
+        if (handler == null) {
+            // Fallback: prefix-matching for handlers like ten-man buttons (tenman_<id>)
+            handler = handlers.values().stream()
+                    .filter(h -> h.matchesComponentId(componentId))
+                    .findFirst()
+                    .orElse(null);
+        }
         if (handler == null) {
             LOGGER.error("No handler found for button: {}", event.getButton().getLabel());
             event.reply("Unknown button: " + event.getButton().getLabel()).setEphemeral(true).queue();
@@ -51,7 +59,7 @@ public class ButtonDispatcher extends ListenerAdapter {
         try {
             ButtonInteractionContext context = new ButtonInteractionContext(
                     event.getTimeCreated(),
-                    handler.getCommandName(),
+                    componentId,
                     event.getUser().getIdLong(),
                     event.getChannelIdLong(),
                     event.getMessageIdLong()

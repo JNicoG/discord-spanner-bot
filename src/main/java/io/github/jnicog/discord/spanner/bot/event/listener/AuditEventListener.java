@@ -10,6 +10,9 @@ import io.github.jnicog.discord.spanner.bot.event.checkin.UnkeenDuringCheckInEve
 import io.github.jnicog.discord.spanner.bot.event.queue.PlayerJoinedQueueEvent;
 import io.github.jnicog.discord.spanner.bot.event.queue.PlayerLeftQueueEvent;
 import io.github.jnicog.discord.spanner.bot.event.queue.PlayerQueueTimeoutEvent;
+import io.github.jnicog.discord.spanner.bot.event.tenman.TenManDateFullEvent;
+import io.github.jnicog.discord.spanner.bot.event.tenman.TenManPollCreatedEvent;
+import io.github.jnicog.discord.spanner.bot.event.tenman.TenManSignupToggledEvent;
 import io.github.jnicog.discord.spanner.bot.repository.entity.EventType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -170,6 +173,55 @@ public class AuditEventListener {
         auditService.recordEvent(
                 event.getChannelId(),
                 EventType.CHECK_IN_TIMEOUT,
+                data
+        );
+    }
+
+    // ==================== Ten-Man Poll Events ====================
+
+    @EventListener
+    @Order(100)
+    public void onTenManPollCreated(TenManPollCreatedEvent event) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("poll_id", event.getPollId());
+        data.put("date_count", event.getDateOptions().size());
+
+        auditService.recordEvent(
+                event.getChannelId(),
+                event.getContext().userId(),
+                EventType.TEN_MAN_POLL_CREATED,
+                data
+        );
+    }
+
+    @EventListener
+    @Order(100)
+    public void onTenManSignupToggled(TenManSignupToggledEvent event) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("poll_id", event.getPollId());
+        data.put("date_option_id", event.getDateOptionId());
+        data.put("added", event.isAdded());
+
+        auditService.recordEvent(
+                event.getChannelId(),
+                event.getUserId(),
+                EventType.TEN_MAN_SIGNUP_TOGGLED,
+                data
+        );
+    }
+
+    @EventListener
+    @Order(100)
+    public void onTenManDateFull(TenManDateFullEvent event) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("poll_id", event.getPollId());
+        data.put("date_option_id", event.getDateOptionId());
+        data.put("date", event.getDate().toString());
+        data.put("signed_up_user_ids", List.copyOf(event.getSignedUpUserIds()));
+
+        auditService.recordEvent(
+                event.getChannelId(),
+                EventType.TEN_MAN_DATE_FULL,
                 data
         );
     }

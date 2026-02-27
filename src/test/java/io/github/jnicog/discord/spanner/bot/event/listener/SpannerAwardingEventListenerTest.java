@@ -61,6 +61,7 @@ class SpannerAwardingEventListenerTest {
                 OffsetDateTime.now(),
                 "test-command",
                 USER_ID,
+                "testuser",
                 CHANNEL_ID,
                 Map.of()
         );

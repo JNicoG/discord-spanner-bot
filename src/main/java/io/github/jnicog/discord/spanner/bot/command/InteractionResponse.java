@@ -14,6 +14,7 @@ public sealed interface InteractionResponse permits
         InteractionResponse.UpdateOriginalMessageAndClearComponents,
         InteractionResponse.EditButtonMessage,
         InteractionResponse.EditButtonMessageAndClearComponents,
+        InteractionResponse.EditButtonMessageWithComponents,
         InteractionResponse.LeaderboardEmbed,
         InteractionResponse.DeferReply,
         InteractionResponse.NoReply {
@@ -33,6 +34,15 @@ public sealed interface InteractionResponse permits
      * and clears all components (buttons). Uses editMessage() instead of hook.editOriginal().
      */
     record EditButtonMessageAndClearComponents(String content) implements InteractionResponse {}
+    /**
+     * Specifically for button interactions - edits the message and replaces buttons with the given specs.
+     * Allows individual buttons to be enabled or disabled.
+     */
+    record EditButtonMessageWithComponents(String content, java.util.List<ButtonSpec> buttonSpecs) implements InteractionResponse {}
+    /**
+     * JDA-free representation of a single button to be rendered in EditButtonMessageWithComponents.
+     */
+    record ButtonSpec(String componentId, String label, boolean disabled) {}
     /**
      * Leaderboard embed with pagination reactions.
      * The dispatcher will send an embed and add reaction emojis.

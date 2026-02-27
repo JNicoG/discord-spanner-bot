@@ -5,6 +5,8 @@ import io.github.jnicog.discord.spanner.bot.leaderboard.LeaderboardPage;
 import io.github.jnicog.discord.spanner.bot.leaderboard.LeaderboardSessionManager;
 import io.github.jnicog.discord.spanner.bot.notification.MessageFormatterService;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -15,6 +17,8 @@ import org.springframework.stereotype.Component;
 
 import java.awt.Color;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -63,6 +67,24 @@ public class JdaResponseTranslator {
                         error -> LOGGER.error("Failed to edit button message and clear components: {}", error.getMessage())
                     );
 
+            case InteractionResponse.EditButtonMessageWithComponents(String content, List<InteractionResponse.ButtonSpec> specs) -> {
+                List<Button> buttons = specs.stream()
+                        .map(s -> s.disabled()
+                                ? Button.primary(s.componentId(), s.label()).asDisabled()
+                                : Button.primary(s.componentId(), s.label()))
+                        .toList();
+                List<ActionRow> rows = new ArrayList<>();
+                for (int i = 0; i < buttons.size(); i += 5) {
+                    rows.add(ActionRow.of(buttons.subList(i, Math.min(i + 5, buttons.size()))));
+                }
+                event.editMessage(content)
+                        .setComponents(rows)
+                        .queue(
+                                __ -> {},
+                                error -> LOGGER.error("Failed to edit button message with components: {}", error.getMessage())
+                        );
+            }
+
             // Delegate other response types to the generic handler
             default -> send((IReplyCallback) event, response);
         }
@@ -109,6 +131,10 @@ public class JdaResponseTranslator {
             case InteractionResponse.EditButtonMessageAndClearComponents(String content) ->
                 // This should only be used with ButtonInteractionEvent
                 LOGGER.error("EditButtonMessageAndClearComponents used with non-button interaction");
+
+            case InteractionResponse.EditButtonMessageWithComponents(String content, List<InteractionResponse.ButtonSpec> specs) ->
+                // This should only be used with ButtonInteractionEvent
+                LOGGER.error("EditButtonMessageWithComponents used with non-button interaction");
 
             case InteractionResponse.LeaderboardEmbed(LeaderboardPage page, long ownerId) ->
                 sendLeaderboardEmbed(interaction, page, ownerId);

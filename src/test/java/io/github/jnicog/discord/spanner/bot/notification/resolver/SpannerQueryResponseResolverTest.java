@@ -45,6 +45,7 @@ class SpannerQueryResponseResolverTest {
                 OffsetDateTime.now(),
                 "spanners",
                 USER_ID,
+                "testuser",
                 CHANNEL_ID,
                 Map.of()
         );
