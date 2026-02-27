@@ -5,6 +5,8 @@ import io.github.jnicog.discord.spanner.bot.event.AbstractCommandResult;
 import io.github.jnicog.discord.spanner.bot.event.tenman.TenManInvalidDateRangeEvent;
 import io.github.jnicog.discord.spanner.bot.event.tenman.TenManPollAlreadyActiveEvent;
 import io.github.jnicog.discord.spanner.bot.event.tenman.TenManPollCreatedEvent;
+import io.github.jnicog.discord.spanner.bot.event.tenman.TenManNotAuthorisedEvent;
+import io.github.jnicog.discord.spanner.bot.tenman.TenManPermissionChecker;
 import io.github.jnicog.discord.spanner.bot.tenman.TenManPollCreatedResult;
 import io.github.jnicog.discord.spanner.bot.tenman.TenManService;
 import org.springframework.stereotype.Component;
@@ -23,9 +25,11 @@ public class TenManCommandHandler implements SlashCommandHandler {
     private static final int MAX_RANGE_DAYS = 14;
 
     private final TenManService tenManService;
+    private final TenManPermissionChecker permissionChecker;
 
-    public TenManCommandHandler(TenManService tenManService) {
+    public TenManCommandHandler(TenManService tenManService, TenManPermissionChecker permissionChecker) {
         this.tenManService = tenManService;
+        this.permissionChecker = permissionChecker;
     }
 
     @Override
@@ -35,6 +39,10 @@ public class TenManCommandHandler implements SlashCommandHandler {
 
     @Override
     public AbstractCommandResult<?> handleCommand(SlashCommandContext context) {
+        if (!permissionChecker.isAllowed(context.username())) {
+            return new TenManNotAuthorisedEvent(context);
+        }
+
         String startDateStr = context.options().get("start_date");
         String endDateStr = context.options().get("end_date");
 

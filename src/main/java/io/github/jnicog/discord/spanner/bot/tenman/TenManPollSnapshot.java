@@ -10,5 +10,6 @@ public record TenManPollSnapshot(
         String timeDisplay,
         boolean testMode,
         OffsetDateTime closesAt,
+        Long lockedDateOptionId,
         List<TenManDateOptionSnapshot> dateOptions
 ) {}

@@ -37,6 +37,6 @@ public class TenManDateFullNotificationHandler {
                 .map(id -> "<@" + id + ">")
                 .collect(Collectors.joining(" "));
 
-        gateway.sendNotification(event.getChannelId(), heading + "\n" + mentions);
+        gateway.sendNotification(event.getChannelId(), heading + "\n" + mentions + "\n*(Poll is now closed)*");
     }
 }

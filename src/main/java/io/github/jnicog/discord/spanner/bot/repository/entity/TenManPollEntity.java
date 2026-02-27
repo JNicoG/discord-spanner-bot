@@ -49,6 +49,9 @@ public class TenManPollEntity {
     @Column(name = "closes_at", nullable = false)
     private OffsetDateTime closesAt;
 
+    @Column(name = "locked_date_option_id")
+    private Long lockedDateOptionId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private TenManPollStatus status;

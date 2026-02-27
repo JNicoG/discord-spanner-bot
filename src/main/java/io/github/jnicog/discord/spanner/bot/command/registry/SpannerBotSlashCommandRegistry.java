@@ -41,10 +41,18 @@ public class SpannerBotSlashCommandRegistry implements SlashCommandRegistry {
                                                 new net.dv8tion.jda.api.interactions.commands.Command.Choice("6 hours", "6"),
                                                 new net.dv8tion.jda.api.interactions.commands.Command.Choice("24 hours (default)", "24"),
                                                 new net.dv8tion.jda.api.interactions.commands.Command.Choice("48 hours", "48"),
-                                                new net.dv8tion.jda.api.interactions.commands.Command.Choice("72 hours", "72")
+                                                new net.dv8tion.jda.api.interactions.commands.Command.Choice("72 hours", "72"),
+                                                new net.dv8tion.jda.api.interactions.commands.Command.Choice("1 week", "168"),
+                                                new net.dv8tion.jda.api.interactions.commands.Command.Choice("2 weeks", "336")
                                         )
                         ),
                 Commands.slash("ten-man-cancel", "Cancel the active 10-man poll in this channel")
+                        .setContexts(InteractionContextType.GUILD),
+                Commands.slash("ten-man-resign", "Sign off the ten-man roster (awards +1 spanner)")
+                        .setContexts(InteractionContextType.GUILD),
+                Commands.slash("ten-man-fill", "Take an open slot on the ten-man roster")
+                        .setContexts(InteractionContextType.GUILD),
+                Commands.slash("ten-man-status", "Show the current ten-man poll and roster status")
                         .setContexts(InteractionContextType.GUILD)
         );
     }

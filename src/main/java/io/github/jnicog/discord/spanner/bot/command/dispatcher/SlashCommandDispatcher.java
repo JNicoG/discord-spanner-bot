@@ -70,6 +70,7 @@ public class SlashCommandDispatcher extends ListenerAdapter {
                     event.getTimeCreated(),
                     handler.getCommandName(),
                     event.getUser().getIdLong(),
+                    event.getUser().getName(),
                     event.getChannelIdLong(),
                     options
             );

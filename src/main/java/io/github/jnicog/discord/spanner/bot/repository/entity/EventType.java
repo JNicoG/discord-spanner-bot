@@ -22,6 +22,8 @@ public enum EventType {
     // Ten-man poll events
     TEN_MAN_POLL_CREATED,
     TEN_MAN_SIGNUP_TOGGLED,
-    TEN_MAN_DATE_FULL
+    TEN_MAN_DATE_FULL,
+    TEN_MAN_ROSTER_RESIGNED,
+    TEN_MAN_ROSTER_FILLED
 }
 

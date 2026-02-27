@@ -44,6 +44,7 @@ class LeaderboardCommandHandlerTest {
                 OffsetDateTime.now(),
                 "leaderboard",
                 USER_ID,
+                "testuser",
                 CHANNEL_ID,
                 Map.of()
         );

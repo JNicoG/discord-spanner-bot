@@ -15,4 +15,6 @@ public interface TenManPollRepository extends JpaRepository<TenManPollEntity, Lo
     Optional<TenManPollEntity> findByDiscordMessageId(Long discordMessageId);
 
     List<TenManPollEntity> findByStatusAndClosesAtBefore(TenManPollStatus status, OffsetDateTime now);
+
+    List<TenManPollEntity> findByStatusAndClosesAtBetween(TenManPollStatus status, OffsetDateTime start, OffsetDateTime end);
 }

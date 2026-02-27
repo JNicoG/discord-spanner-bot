@@ -45,6 +45,7 @@ class SpannersCommandHandlerTest {
                 OffsetDateTime.now(),
                 "spanners",
                 USER_ID,
+                "testuser",
                 CHANNEL_ID,
                 options
         );

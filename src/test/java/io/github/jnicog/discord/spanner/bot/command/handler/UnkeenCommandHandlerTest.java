@@ -57,6 +57,7 @@ class UnkeenCommandHandlerTest {
                 OffsetDateTime.now(),
                 "unkeen",
                 USER_ID,
+                "testuser",
                 CHANNEL_ID,
                 Map.of()
         );
