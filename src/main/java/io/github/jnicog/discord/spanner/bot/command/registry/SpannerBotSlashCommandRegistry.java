@@ -29,6 +29,7 @@ public class SpannerBotSlashCommandRegistry implements SlashCommandRegistry {
                         .setContexts(InteractionContextType.GUILD),
                 Commands.slash("ten-man", "Create a 10-man availability poll")
                         .setContexts(InteractionContextType.GUILD)
+                        .setDefaultPermissions(DefaultMemberPermissions.DISABLED)
                         .addOptions(
                                 new OptionData(OptionType.STRING, "start_date", "Start date (yyyy-MM-dd)", true),
                                 new OptionData(OptionType.STRING, "end_date", "End date (yyyy-MM-dd)", true),
