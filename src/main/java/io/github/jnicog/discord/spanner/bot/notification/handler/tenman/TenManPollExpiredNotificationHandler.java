@@ -25,10 +25,18 @@ public class TenManPollExpiredNotificationHandler {
     public void onPollExpired(TenManPollExpiredEvent event) {
         TenManPollSnapshot snapshot = event.getSnapshot();
 
-        // Locked poll expired — roster wasn't filled back up in time after someone resigned
+        // Locked poll expired — check if the roster was still below capacity (i.e. someone resigned and it wasn't refilled)
         if (snapshot.lockedDateOptionId() != null) {
-            LOGGER.info("Ten-man poll {} (LOCKED) expired without being refilled — notifying channel", snapshot.pollId());
-            gateway.sendNotification(snapshot.channelId(), "The ten-man roster couldn't be filled in time. 😔 The match is off.");
+            int capacity = snapshot.testMode() ? TEST_CAPACITY : CAPACITY;
+            boolean rosterStillFull = snapshot.dateOptions().stream()
+                    .filter(opt -> opt.id() == snapshot.lockedDateOptionId())
+                    .findFirst()
+                    .map(opt -> opt.signedUpUserIds().size() >= capacity)
+                    .orElse(false);
+            if (!rosterStillFull) {
+                LOGGER.info("Ten-man poll {} (LOCKED) expired without being refilled — notifying channel", snapshot.pollId());
+                gateway.sendNotification(snapshot.channelId(), "The ten-man roster couldn't be filled in time. 😔 The match is off.");
+            }
             return;
         }
 

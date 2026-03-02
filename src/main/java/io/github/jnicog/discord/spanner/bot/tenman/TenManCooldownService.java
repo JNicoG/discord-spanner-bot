@@ -26,7 +26,9 @@ public class TenManCooldownService {
     }
 
     public void recordAction(long userId, long dateOptionId) {
-        lastAction.put(key(userId, dateOptionId), Instant.now());
+        Instant now = Instant.now();
+        lastAction.entrySet().removeIf(entry -> !now.isBefore(entry.getValue().plus(COOLDOWN)));
+        lastAction.put(key(userId, dateOptionId), now);
     }
 
     private String key(long userId, long dateOptionId) {

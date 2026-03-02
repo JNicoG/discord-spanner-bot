@@ -1,7 +1,6 @@
 package io.github.jnicog.discord.spanner.bot.tenman;
 
 import java.time.LocalDate;
-import java.util.List;
 
 public sealed interface TenManResignSlashResult
         permits TenManResignSlashResult.Resigned,

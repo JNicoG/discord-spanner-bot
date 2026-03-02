@@ -28,7 +28,7 @@ public class TenManDateFullResponseResolver implements ResponseResolver<TenManDa
                 .map(opt -> new InteractionResponse.ButtonSpec(
                         "tenman_" + opt.id(),
                         opt.date().format(BUTTON_FORMAT),
-                        lockedId == null || opt.id() != lockedId
+                        lockedId != null && opt.id() != lockedId
                 ))
                 .toList();
 
