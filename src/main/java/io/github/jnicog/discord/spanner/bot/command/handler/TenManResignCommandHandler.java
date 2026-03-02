@@ -27,7 +27,7 @@ public class TenManResignCommandHandler implements SlashCommandHandler {
 
     @Override
     public AbstractCommandResult<?> handleCommand(SlashCommandContext context) {
-        java.util.Optional<Long> lockedIdOpt = tenManService.getLockedDateOptionId(context.channelId());
+        Optional<Long> lockedIdOpt = tenManService.getLockedDateOptionId(context.channelId());
         if (lockedIdOpt.isPresent() && cooldownService.isOnCooldown(context.userId(), lockedIdOpt.get())) {
             long secs = cooldownService.remainingCooldown(context.userId(), lockedIdOpt.get()).getSeconds();
             long mins = secs / 60;
