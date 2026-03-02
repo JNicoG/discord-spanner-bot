@@ -9,6 +9,8 @@ import io.github.jnicog.discord.spanner.bot.tenman.TenManResignSlashResult;
 import io.github.jnicog.discord.spanner.bot.tenman.TenManService;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 public class TenManResignCommandHandler implements SlashCommandHandler {
 
