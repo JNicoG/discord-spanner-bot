@@ -12,6 +12,7 @@ public record SlashCommandContext(
         OffsetDateTime eventTime,
         String commandName,
         long userId,
+        String username,
         long channelId,
         Map<String, String> options
 ) {
@@ -19,6 +20,7 @@ public record SlashCommandContext(
     public SlashCommandContext {
         Objects.requireNonNull(eventTime);
         Objects.requireNonNull(commandName);
+        Objects.requireNonNull(username);
         Objects.requireNonNull(options);
     }
 }

@@ -5,6 +5,8 @@ import io.github.jnicog.discord.spanner.bot.event.checkin.CheckInCancelledEvent;
 import io.github.jnicog.discord.spanner.bot.event.checkin.CheckInTimeoutEvent;
 import io.github.jnicog.discord.spanner.bot.event.checkin.UnkeenDuringCheckInEvent;
 import io.github.jnicog.discord.spanner.bot.event.queue.PlayerLeftQueueEvent;
+import io.github.jnicog.discord.spanner.bot.event.tenman.TenManRosterResignedButtonEvent;
+import io.github.jnicog.discord.spanner.bot.event.tenman.TenManRosterResignedSlashEvent;
 import io.github.jnicog.discord.spanner.bot.repository.entity.EventType;
 import io.github.jnicog.discord.spanner.bot.spanner.SpannerService;
 import org.slf4j.Logger;
@@ -104,6 +106,24 @@ public class SpannerAwardingEventListener {
 
             recordSpannerAuditEvent(channelId, userId, "CHECK_IN_TIMEOUT");
         }
+    }
+
+    @EventListener
+    @Order(10)
+    public void onTenManRosterResignedByButton(TenManRosterResignedButtonEvent event) {
+        awardTenManResignSpanner(event.getUserId(), event.getChannelId());
+    }
+
+    @EventListener
+    @Order(10)
+    public void onTenManRosterResignedBySlash(TenManRosterResignedSlashEvent event) {
+        awardTenManResignSpanner(event.getUserId(), event.getChannelId());
+    }
+
+    private void awardTenManResignSpanner(long userId, long channelId) {
+        LOGGER.info("Awarding spanner to user {} in channel {} for resigning from ten-man roster", userId, channelId);
+        spannerService.incrementSpannerCount(userId, channelId);
+        recordSpannerAuditEvent(channelId, userId, "TEN_MAN_ROSTER_RESIGNED");
     }
 
     private void recordSpannerAuditEvent(long channelId, long userId, String reason) {

@@ -36,3 +36,5 @@ build/
 .env
 docker/.env
 *.env
+
+.claude/

@@ -17,6 +17,10 @@ public interface ButtonCommandHandler {
         return List.of();
     }
 
+    default boolean matchesComponentId(String componentId) {
+        return getCommandName().equals(componentId);
+    }
+
     /**
      * Handle the command and return a domain result.
      * The result should not contain any JDA-specific objects.
