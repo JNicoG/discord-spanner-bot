@@ -4,6 +4,10 @@ CREATE TABLE ten_man_poll (
     created_by_user_id   BIGINT NOT NULL,
     discord_message_id   BIGINT,
     status               VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    time_display         VARCHAR(100),
+    test_mode            BOOLEAN NOT NULL DEFAULT FALSE,
+    closes_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW() + INTERVAL '24 hours',
+    locked_date_option_id BIGINT,
     created_at           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -24,3 +28,6 @@ CREATE TABLE ten_man_signup (
     signed_up_at   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE UNIQUE INDEX uq_ten_man_signup_option_user ON ten_man_signup (date_option_id, user_id);
+
+ALTER TABLE ten_man_poll
+    ADD CONSTRAINT fk_ten_man_poll_locked_date FOREIGN KEY (locked_date_option_id) REFERENCES ten_man_date_option(id);

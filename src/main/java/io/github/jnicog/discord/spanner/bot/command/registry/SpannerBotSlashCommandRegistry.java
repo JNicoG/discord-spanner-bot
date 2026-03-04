@@ -1,6 +1,7 @@
 package io.github.jnicog.discord.spanner.bot.command.registry;
 
 import net.dv8tion.jda.api.interactions.InteractionContextType;
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -29,6 +30,7 @@ public class SpannerBotSlashCommandRegistry implements SlashCommandRegistry {
                         .setContexts(InteractionContextType.GUILD),
                 Commands.slash("ten-man", "Create a 10-man availability poll")
                         .setContexts(InteractionContextType.GUILD)
+                        .setDefaultPermissions(DefaultMemberPermissions.DISABLED)
                         .addOptions(
                                 new OptionData(OptionType.STRING, "start_date", "Start date (yyyy-MM-dd)", true),
                                 new OptionData(OptionType.STRING, "end_date", "End date (yyyy-MM-dd)", true),
@@ -47,7 +49,8 @@ public class SpannerBotSlashCommandRegistry implements SlashCommandRegistry {
                                         )
                         ),
                 Commands.slash("ten-man-cancel", "Cancel the active 10-man poll in this channel")
-                        .setContexts(InteractionContextType.GUILD),
+                        .setContexts(InteractionContextType.GUILD)
+                        .setDefaultPermissions(DefaultMemberPermissions.DISABLED),
                 Commands.slash("ten-man-resign", "Sign off the ten-man roster (awards +1 spanner)")
                         .setContexts(InteractionContextType.GUILD),
                 Commands.slash("ten-man-fill", "Take an open slot on the ten-man roster")

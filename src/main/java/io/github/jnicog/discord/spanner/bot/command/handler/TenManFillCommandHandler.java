@@ -9,6 +9,8 @@ import io.github.jnicog.discord.spanner.bot.tenman.TenManFillSlashResult;
 import io.github.jnicog.discord.spanner.bot.tenman.TenManService;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 public class TenManFillCommandHandler implements SlashCommandHandler {
 
@@ -27,7 +29,7 @@ public class TenManFillCommandHandler implements SlashCommandHandler {
 
     @Override
     public AbstractCommandResult<?> handleCommand(SlashCommandContext context) {
-        java.util.Optional<Long> lockedIdOpt = tenManService.getLockedDateOptionId(context.channelId());
+        Optional<Long> lockedIdOpt = tenManService.getLockedDateOptionId(context.channelId());
         if (lockedIdOpt.isPresent() && cooldownService.isOnCooldown(context.userId(), lockedIdOpt.get())) {
             long secs = cooldownService.remainingCooldown(context.userId(), lockedIdOpt.get()).getSeconds();
             long mins = secs / 60;

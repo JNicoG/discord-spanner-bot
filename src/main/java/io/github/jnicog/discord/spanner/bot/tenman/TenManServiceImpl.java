@@ -16,6 +16,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Service
 @Transactional
@@ -215,7 +216,7 @@ public class TenManServiceImpl implements TenManService {
         OffsetDateTime now = OffsetDateTime.now();
         List<TenManPollEntity> expiredActive = pollRepository.findByStatusAndClosesAtBefore(TenManPollStatus.ACTIVE, now);
         List<TenManPollEntity> expiredLocked = pollRepository.findByStatusAndClosesAtBefore(TenManPollStatus.LOCKED, now);
-        return java.util.stream.Stream.concat(expiredActive.stream(), expiredLocked.stream())
+        return Stream.concat(expiredActive.stream(), expiredLocked.stream())
                 .map(poll -> {
                     TenManPollSnapshot snapshot = buildSnapshot(poll);
                     poll.setStatus(TenManPollStatus.CLOSED);

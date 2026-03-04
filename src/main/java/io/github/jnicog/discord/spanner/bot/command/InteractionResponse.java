@@ -2,6 +2,8 @@ package io.github.jnicog.discord.spanner.bot.command;
 
 import io.github.jnicog.discord.spanner.bot.leaderboard.LeaderboardPage;
 
+import java.util.List;
+
 /**
  * Represents an interaction response that is completely decoupled from JDA.
  * The dispatcher translates this into the appropriate JDA call.
@@ -38,7 +40,7 @@ public sealed interface InteractionResponse permits
      * Specifically for button interactions - edits the message and replaces buttons with the given specs.
      * Allows individual buttons to be enabled or disabled.
      */
-    record EditButtonMessageWithComponents(String content, java.util.List<ButtonSpec> buttonSpecs) implements InteractionResponse {}
+    record EditButtonMessageWithComponents(String content, List<ButtonSpec> buttonSpecs) implements InteractionResponse {}
     /**
      * JDA-free representation of a single button to be rendered in EditButtonMessageWithComponents.
      */
