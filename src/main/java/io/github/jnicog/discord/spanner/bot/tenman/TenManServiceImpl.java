@@ -195,9 +195,9 @@ public class TenManServiceImpl implements TenManService {
     @Override
     @Transactional(readOnly = true)
     public TenManPollSnapshot getPollSnapshot(long pollId) {
-        TenManPollEntity poll = pollRepository.findById(pollId)
+        return pollRepository.findById(pollId)
+                .map(this::buildSnapshot)
                 .orElseThrow(() -> new IllegalArgumentException("Poll not found: " + pollId));
-        return buildSnapshot(poll);
     }
 
     @Override
