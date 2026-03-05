@@ -22,3 +22,8 @@ ___
 ## Screenshots
 ___
 <!-- Attach any relevant screenshots. -->
+
+
+## Checklist
+- [ ] Code compiles & runs locally without errors
+- [ ] Self-reviewed
