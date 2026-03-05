@@ -13,7 +13,7 @@ public class TenManCooldownButtonResponseResolver implements ResponseResolver<Te
         long mins = event.getRemainingSeconds() / 60;
         long secs = event.getRemainingSeconds() % 60;
         String timeLeft = mins > 0 ? mins + "m " + secs + "s" : secs + "s";
-        return new InteractionResponse.PublicReply(
+        return new InteractionResponse.EphemeralReply(
                 "Easy there, <@" + event.getUserId() + ">! 🛑 You just changed your sign-up. Wait " + timeLeft + " before changing it again.");
     }
 }
