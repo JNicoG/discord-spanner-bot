@@ -10,7 +10,7 @@ import java.time.Instant;
 @Component
 public class TenManCooldownService {
 
-    static final Duration COOLDOWN = Duration.ofMinutes(10);
+    static final Duration COOLDOWN = Duration.ofSeconds(10);
 
     private final Cache<String, Instant> lastAction = CacheBuilder.newBuilder()
             .expireAfterWrite(COOLDOWN)
